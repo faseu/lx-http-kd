@@ -44,11 +44,31 @@
           placeholder="请输入联系电话"
         />
       </wd-cell-group>
-      <insurance />
+
+      <!-- 保险选择组件 -->
+      <insurance @insuranceChange="handleInsuranceChange" />
+
+      <!-- 显示当前选中的保险信息 -->
+      <view class="insurance-info">
+        <view class="info-item">
+          <text class="label">已选保险：</text>
+          <text class="value">{{ selectedInsurance.name }}</text>
+        </view>
+        <view class="info-item">
+          <text class="label">保险费用：</text>
+          <text class="value price">￥{{ selectedInsurance.price }}/人</text>
+        </view>
+        <view class="info-item">
+          <text class="label">保障金额：</text>
+          <text class="value">{{ selectedInsurance.coverage }}万元</text>
+        </view>
+      </view>
+
       <view>
         <driverItem bg="#f6f8fa" />
         <driverItem bg="#f6f8fa" />
       </view>
+
       <wd-cell-group title="当车主">
         <template #value>
           <div class="w-full flex items-center justify-between">
@@ -83,6 +103,7 @@
           "
         />
       </wd-cell-group>
+
       <view class="mt-30rpx flex" v-if="model.is_driver">
         <wd-upload
           :limit="1"
@@ -113,6 +134,7 @@
           </view>
         </wd-upload>
       </view>
+
       <view class="color-[#FF5252] text-24rpx mt-20rpx">
         注：加入队伍需预付费用，出发前72小时退出全额退款，出发前24 小时退出退款50%
       </view>
@@ -130,7 +152,7 @@
         <view class="flex items-center text-28rpx">
           <view class="flex-1 mr-48rpx">
             <text>应付金额 ：</text>
-            <text style="color: #d8aa4f">{{ `¥ ${price}` }}</text>
+            <text style="color: #d8aa4f">{{ `¥ ${totalPrice}` }}</text>
           </view>
           <wd-button
             custom-style="width: 320rpx; background-color: #4BD06E !important;"
@@ -150,7 +172,7 @@
 </template>
 
 <script lang="js" setup>
-import { reactive, ref } from 'vue'
+import { reactive, ref, computed } from 'vue'
 import { httpPost } from '@/utils/http'
 import { useUserStore } from '@/store'
 import { onLoad } from '@dcloudio/uni-app'
@@ -165,11 +187,22 @@ const userStore = useUserStore()
 const {
   user_info: { id: localLeaderId },
 } = userStore.userInfo
+
 const form = ref()
 const visible = ref(false)
 const id = ref()
 const leaderId = ref()
-const price = ref(0)
+const basePrice = ref(0) // 队伍基础费用
+
+// 选中的保险信息
+const selectedInsurance = ref({
+  type: 'comprehensive',
+  name: '全面保障',
+  price: 12.98,
+  coverage: 50,
+  features: [],
+})
+
 const model = reactive({
   name: '',
   id_card: '',
@@ -179,18 +212,39 @@ const model = reactive({
   fileList1: [],
   fileList2: [],
   read: false,
+  // 保险相关字段
+  insurance_type: 'comprehensive',
+  insurance_price: 12.98,
 })
+
+// 计算总价格（基础费用 + 保险费用）
+const totalPrice = computed(() => {
+  return (parseFloat(basePrice.value) + parseFloat(selectedInsurance.value.price)).toFixed(2)
+})
+
 const getRules = () => ({
   name: [{ required: true, message: '请输入姓名' }],
   id_card: [{ required: true, message: '请输入身份证号' }],
   phone: [{ required: true, message: '请输入手机号' }],
   license_plate: [
     {
-      required: model.is_driver, // 每次动态取值
+      required: model.is_driver,
       message: '请填写车牌信息',
     },
   ],
 })
+
+// 处理保险选择变化
+const handleInsuranceChange = (insuranceData) => {
+  console.log('选中保险:', insuranceData)
+  selectedInsurance.value = insuranceData
+
+  // 更新模型中的保险相关字段
+  model.insurance_type = insuranceData.type
+  model.insurance_price = insuranceData.price
+
+  toast.show(`已选择${insuranceData.name}，保费￥${insuranceData.price}/人`)
+}
 
 const { run: joinTeam } = useRequest((e) => httpPost('/api/activity/team/join', e))
 const { run: updateLeader } = useRequest((e) => httpPost('/api/activity/team/update_user', e))
@@ -208,13 +262,8 @@ onLoad((options) => {
     }
   }
   if (options.price) {
-    price.value = options.price
+    basePrice.value = options.price
   }
-  // uni.login({
-  //   success: (res) => {
-  //     console.log(res)
-  //   },
-  // })
 })
 
 const handleFileChange1 = ({ fileList }) => {
@@ -232,34 +281,46 @@ const handleSubmit = async () => {
       toast.show('请上传行驶证/驾驶证')
       return
     }
-    // 手动校验车牌号格式（如果不是在规则中做）
+    // 手动校验车牌号格式
     if (model.is_driver && !/^[\u4e00-\u9fa5]{1}[A-Z]{1}[A-Z0-9]{5}$/.test(model.license_plate)) {
       toast.show('请输入正确的车牌号，例如：渝A12345')
       return
     }
-    const e = {
+
+    const submitData = {
       ...model,
       team_id: id.value,
-      car_photo: `${JSON.parse(model.fileList1[0].response).data},${JSON.parse(model.fileList2[0].response).data}`,
+      total_price: totalPrice.value, // 总价格
+      base_price: basePrice.value, // 基础价格
+      insurance_features: selectedInsurance.value.features, // 保险特性
     }
-    if (!model.is_driver) {
-      delete e.car_photo
+
+    // 如果是车主，添加车辆照片
+    if (model.is_driver) {
+      submitData.car_photo = `${JSON.parse(model.fileList1[0].response).data},${JSON.parse(model.fileList2[0].response).data}`
     }
-    if (Number(localLeaderId) === Number(leaderId.value)) {
-      await updateLeader(e)
-      toast.show('已加入队伍！')
+
+    console.log('提交数据:', submitData)
+
+    try {
+      if (Number(localLeaderId) === Number(leaderId.value)) {
+        await updateLeader(submitData)
+        toast.show('队长信息更新成功！')
+      } else {
+        await joinTeam(submitData)
+        toast.show('已成功加入队伍！')
+      }
+
       setTimeout(() => {
         uni.navigateBack()
-      }, 1000)
-    } else {
-      await joinTeam(e)
-      toast.show('已加入队伍！')
-      setTimeout(() => {
-        uni.navigateBack()
-      }, 1000)
+      }, 1500)
+    } catch (error) {
+      console.error('提交失败:', error)
+      toast.show('提交失败，请重试')
     }
   }
 }
+
 const checkRead = () => {
   if (model.read) {
     handleSubmit()
@@ -282,6 +343,7 @@ const checkRead = () => {
 const onInputCar = (value) => {
   model.license_plate = `${model.license_plate}${value}`
 }
+
 const onDeleteCar = () => {
   model.license_plate = model.license_plate.slice(0, -1)
 }
@@ -315,6 +377,42 @@ const onDeleteCar = () => {
   padding: 20rpx;
   box-sizing: border-box;
   overflow-x: hidden;
+}
+
+// 保险信息显示样式
+.insurance-info {
+  margin: 20rpx 0;
+  padding: 20rpx;
+  background: #f8f9fa;
+  border-radius: 12rpx;
+  border-left: 4rpx solid #4bd06e;
+
+  .info-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 12rpx;
+    font-size: 26rpx;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+
+    .label {
+      color: #666;
+      width: 160rpx;
+    }
+
+    .value {
+      color: #333;
+      font-weight: 500;
+      flex: 1;
+
+      &.price {
+        color: #ff8c28;
+        font-weight: bold;
+      }
+    }
+  }
 }
 
 :deep() {
