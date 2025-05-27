@@ -1,9 +1,9 @@
 <route lang="json5" type="home">
 {
-  style: {
-    navigationStyle: 'custom',
-    navigationBarTitleText: '',
-  },
+style: {
+navigationStyle: 'custom',
+navigationBarTitleText: '',
+},
 }
 </route>
 
@@ -23,7 +23,7 @@
             custom-style="background-color: transparent !important; z-index: 99"
           >
             <template #left>
-              <wd-img height="74rpx" width="194rpx" src="/static/images/homepage/title.png" />
+              <image class="w-194rpx h-74rpx" src="/static/images/homepage/title.png" />
             </template>
           </wd-navbar>
           <view class="title-box">
@@ -38,32 +38,38 @@
                 :key="j"
                 @click="toFunPage(i)"
               >
-                <image class="w-90rpx h-90rpx" :src="i.logo"></image>
+                <image class="w-90rpx h-90rpx pos-relative z-index-100" :src="i.logo"></image>
                 <view class="function-text">{{ i.name }}</view>
               </view>
             </view>
             <view class="btm_top">
               <view class="w-[350rpx] flex justify-between">
-                <view
-                  class="flex justify-between items-center w-[170rpx] h-[48rpx] bg-[#E7F0F6] rounded-[24rpx] px-[20rpx] box-border"
-                >
-                  <view class="flex-1 flex justify-center">一日徒步</view>
-                  <wd-img
-                    mode="aspectFill"
-                    custom-class="pos-absolute w-18rpx h-12rpx"
-                    src="/static/images/common/triangle.png"
-                  />
-                </view>
-                <view
-                  class="flex justify-between items-center w-[170rpx] h-[48rpx] bg-[#E7F0F6] rounded-[24rpx] px-[20rpx] box-border"
-                >
-                  <view class="flex-1 flex justify-center">时间</view>
-                  <wd-img
-                    mode="aspectFill"
-                    custom-class="pos-absolute w-18rpx h-12rpx"
-                    src="/static/images/common/triangle.png"
-                  />
-                </view>
+                <!-- 一日徒步选择器 -->
+                <wd-picker :columns="hikingColumns" v-model="selectedHiking" use-default-slot @confirm="handleHikingConfirm">
+                  <view class="flex justify-between items-center w-[170rpx] h-[48rpx] bg-[#E7F0F6] rounded-[24rpx] px-[20rpx] box-border">
+                    <view class="flex-1 flex justify-center text-24rpx">
+                      {{ selectedHiking || '全部' }}
+                    </view>
+                    <wd-img
+                      mode="aspectFill"
+                      custom-class="pos-absolute w-18rpx h-12rpx"
+                      src="/static/images/common/triangle.png"
+                    />
+                  </view>
+                </wd-picker>
+                <!-- 时间选择器 -->
+                <wd-picker :columns="dateColumns" v-model="selectedDateRange" use-default-slot @confirm="handleDateConfirm">
+                  <view class="flex justify-between items-center w-[170rpx] h-[48rpx] bg-[#E7F0F6] rounded-[24rpx] px-[20rpx] box-border">
+                    <view class="flex-1 flex justify-center text-24rpx">
+                      {{ selectedDateRange || '全部' }}
+                    </view>
+                    <wd-img
+                      mode="aspectFill"
+                      custom-class="pos-absolute w-18rpx h-12rpx"
+                      src="/static/images/common/triangle.png"
+                    />
+                  </view>
+                </wd-picker>
               </view>
               <view class="search-box" @click="goToSearch">
                 <view class="search-input">中坝森林</view>
@@ -83,6 +89,8 @@
         <tabbar :selected="0" />
       </template>
     </z-paging>
+
+
   </view>
 </template>
 
@@ -96,7 +104,14 @@ import { getIsTabbar } from '@/utils'
 
 const paging = ref(null)
 const functionList = ref([])
-const tmpClassify = 'preview'
+let tmpClassify = 'preview'
+
+// 筛选相关状态
+const selectedHiking = ref('全部')
+const hikingColumns = ref(['全部', '一日徒步', '两日徒步', '三日徒步', '多日徒步'])
+
+const selectedDateRange = ref('全部')
+const dateColumns = ref(['全部', '明天', '本周', '下周', '本月', '下月'])
 
 // 请求分类列表
 const { run: runGetCategoriesList } = useRequest((e) => httpGet('/api/category/category_list'))
@@ -105,6 +120,8 @@ const { run: runGetList } = useRequest((e) =>
     page: e.pageNo,
     page_size: e.pageSize,
     classify: tmpClassify,
+    hiking_type: e.hiking_type, // 添加徒步类型参数
+    date_filter: e.date_filter, // 添加时间筛选参数
   }),
 )
 
@@ -112,9 +129,39 @@ const dataList = ref([])
 
 // 请求活动列表
 const queryList = async (pageNo, pageSize) => {
-  const { list } = await runGetList({ pageNo, pageSize })
+  // 构建查询参数
+  const queryParams = {
+    pageNo,
+    pageSize,
+  }
+
+  // 添加徒步类型筛选
+  if (selectedHiking.value && selectedHiking.value !== '全部') {
+    queryParams.hiking_type = selectedHiking.value
+  }
+
+  // 添加时间范围筛选
+  if (selectedDateRange.value && selectedDateRange.value !== '时间') {
+    queryParams.date_filter = selectedDateRange.value
+  }
+
+  const { list } = await runGetList(queryParams)
   console.log(list)
   paging.value.complete(list)
+}
+
+// 处理徒步类型选择
+const handleHikingConfirm = ({ value }) => {
+  selectedHiking.value = value
+  // 重新加载数据
+  paging.value?.reload()
+}
+
+// 处理日期范围选择
+const handleDateConfirm = ({ value }) => {
+  selectedDateRange.value = value
+  // 重新加载数据
+  paging.value?.reload()
 }
 
 onShow(async () => {
@@ -274,6 +321,9 @@ input {
 
   .wd-navbar.is-border::after {
     display: none;
+  }
+  .wd-picker__wraper {
+    margin-bottom: 150rpx;
   }
 }
 </style>

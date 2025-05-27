@@ -52,22 +52,17 @@
       <view class="mt-20rpx w-full bg-white p-24rpx box-border rounded-20rpx">
         <view class="flex items-center">
           <view class="color-[#999] mr-42rpx ml-12rpx">活动开始</view>
-          <image class="w-32rpx h-32rpx mr-16rpx" src="https://temp.im/32x32" />
+          <image class="w-32rpx h-32rpx mr-16rpx" src="/static/images/teamDetail/clock.png" />
           <view class="flex-1">{{ formatDateTime(teamDetail?.start_time) }}</view>
         </view>
         <view class="flex items-center mt-20rpx">
-          <view class="color-[#999] mr-42rpx ml-12rpx">活动结束</view>
-          <image class="w-32rpx h-32rpx mr-16rpx" src="https://temp.im/32x32" />
-          <view class="flex-1">{{ formatDateTime(teamDetail?.end_time) }}</view>
-        </view>
-        <view class="flex items-center mt-20rpx">
           <view class="color-[#999] mr-42rpx ml-12rpx">活动位置</view>
-          <image class="w-32rpx h-32rpx mr-16rpx" src="https://temp.im/32x32" />
+          <image class="w-28rpx h-34rpx mr-16rpx" src="/static/images/teamDetail/location.png" />
           <view class="flex-1">
             <view>{{ teamDetail?.location || '活动地点' }}</view>
-            <view class="text-20rpx color-[#999]">详细地址</view>
+            <view class="text-20rpx color-[#999]">活动地点</view>
           </view>
-          <image class="w-32rpx h-32rpx mr-16rpx" src="https://temp.im/32x32" />
+          <wd-icon name="arrow-right" color-[#333] size="32rpx"></wd-icon>
         </view>
       </view>
 
@@ -127,7 +122,7 @@
 
       <!-- 发布者信息 -->
       <view
-        class="mt-20rpx w-full bg-white p-[12rpx_24rpx] box-border rounded-20rpx flex items-center"
+        class="mt-20rpx w-full h-100rpx bg-white p-[12rpx_24rpx] box-border rounded-20rpx flex items-center"
       >
         <image
           class="w-72rpx h-72rpx mr-16rpx rounded-[50%]"
@@ -141,7 +136,7 @@
               '匿名用户'
             }}
           </view>
-          <view class="text-20rpx color-[#999]">
+          <view class="text-20rpx color-[#999] mt-4rpx">
             联系方式：{{ maskPhone(teamDetail?.creator_participant?.phone) }}（未报名不可见）
           </view>
         </view>
@@ -168,7 +163,7 @@
                   : `仅剩${(teamDetail?.max_participants || 0) - (teamDetail?.members_info?.length || 0)}个名额`
               }}
             </view>
-            <image class="w-48rpx h-48rpx" src="https://temp.im/72x72" />
+            <wd-icon name="arrow-right" color="#FF665A" size="32rpx"></wd-icon>
           </view>
         </view>
         <view class="flex mt-16rpx justify-between w-full">
@@ -179,19 +174,7 @@
             :src="member?.user_info?.avatar || 'https://temp.im/60x60'"
           />
         </view>
-        <!-- 队伍状态信息 -->
-        <view class="mt-20rpx flex items-center justify-between">
-          <view class="flex items-center">
-            <view class="color-[#999] mr-12rpx">队伍状态:</view>
-            <view :class="teamDetail?.is_full ? 'color-[#FF665A]' : 'color-[#28A745]'">
-              {{ teamDetail?.is_full ? '已满员' : '可报名' }}
-            </view>
-          </view>
-          <view class="flex items-center">
-            <view class="color-[#999] mr-12rpx">审核状态:</view>
-            <view class="color-[#28A745]">{{ getReviewStatus(teamDetail?.review_status) }}</view>
-          </view>
-        </view>
+
       </view>
 
       <!-- 车主信息 -->
@@ -297,7 +280,7 @@
             <view class="flex items-center justify-center w-130rpx h-[100%] color-[#999]">
               其他备注
             </view>
-            <view class="p-[6rpx_30rpx] flex-1 bg-white">
+            <view class="flex items-center p-[6rpx_30rpx] flex-1 bg-white min-h-66rpx box-border">
               {{ teamDetail?.other_fee_introduced || '暂无其他备注' }}
             </view>
           </view>
@@ -311,7 +294,7 @@
     <view class="footer bg-white">
       <view class="flex items-center text-20rpx h-120rpx">
         <view class="flex flex-col items-center mr-48rpx" @click="share">
-          <image class="w-32rpx h-32rpx" src="/static/images/common/reload.png" alt="" />
+          <image class="w-32rpx h-32rpx" src="/static/images/teamDetail/share.png" alt="" />
           <view class="mt-6rpx">分享</view>
         </view>
         <wd-button

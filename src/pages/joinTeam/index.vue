@@ -44,6 +44,7 @@
           placeholder="请输入联系电话"
         />
       </wd-cell-group>
+      <insurance />
       <view>
         <driverItem bg="#f6f8fa" />
         <driverItem bg="#f6f8fa" />
@@ -56,6 +57,7 @@
           </div>
         </template>
         <wd-input
+          v-if="model.is_driver"
           label="可载人数"
           type="number"
           label-width="100px"
@@ -154,6 +156,7 @@ import { useUserStore } from '@/store'
 import { onLoad } from '@dcloudio/uni-app'
 import { useToast, useMessage } from 'wot-design-uni'
 import driverItem from '@/components/driver-item/index.vue'
+import insurance from '@/components/insurance/index.vue'
 
 const message = useMessage()
 const toast = useToast()
@@ -311,6 +314,7 @@ const onDeleteCar = () => {
 .content {
   padding: 20rpx;
   box-sizing: border-box;
+  overflow-x: hidden;
 }
 
 :deep() {
