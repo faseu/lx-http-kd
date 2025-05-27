@@ -1,0 +1,223 @@
+{
+  "globalStyle": {
+    "navigationStyle": "default",
+    "navigationBarTitleText": "unibest",
+    "navigationBarBackgroundColor": "#f8f8f8",
+    "navigationBarTextStyle": "black",
+    "backgroundColor": "#FFFFFF"
+  },
+  "easycom": {
+    "autoscan": true,
+    "custom": {
+      "^wd-(.*)": "wot-design-uni/components/wd-$1/wd-$1.vue",
+      "^(?!z-paging-refresh|z-paging-load-more)z-paging(.*)": "z-paging/components/z-paging$1/z-paging$1.vue"
+    }
+  },
+  "tabBar": {
+    "color": "#838281",
+    "selectedColor": "#007135",
+    "backgroundColor": "#F8F8F8",
+    "borderStyle": "black",
+    "height": "50px",
+    "fontSize": "10px",
+    "iconWidth": "24px",
+    "spacing": "3px",
+    "list": [
+      {
+        "pagePath": "pages/home/index",
+        "iconPath": "static/images/index/tab_1_non.png",
+        "selectedIconPath": "static/images/index/tab_1_act.png",
+        "text": "首页"
+      },
+      {
+        "pagePath": "pages/share/index",
+        "iconPath": "static/images/index/tab_2_non.png",
+        "selectedIconPath": "static/images/index/tab_2_act.png",
+        "text": "分享"
+      },
+      {
+        "pagePath": "pages/message/index",
+        "iconPath": "static/images/index/tab_3_non.png",
+        "selectedIconPath": "static/images/index/tab_3_act.png",
+        "text": "消息"
+      },
+      {
+        "pagePath": "pages/mine/index",
+        "iconPath": "static/images/index/tab_4_non.png",
+        "selectedIconPath": "static/images/index/tab_4_act.png",
+        "text": "我的"
+      }
+    ]
+  },
+  "pages": [
+    {
+      "path": "pages/home/index",
+      "type": "home",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": ""
+      }
+    },
+    {
+      "path": "pages/chatRoom/index",
+      "type": "page",
+      "style": {
+        "navigationBarTitleText": "聊天室"
+      }
+    },
+    {
+      "path": "pages/homePage/activityDetail",
+      "type": "page",
+      "style": {
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/homePage/goHiking",
+      "type": "page",
+      "style": {
+        "navigationBarTitleText": "",
+        "navigationBarBackgroundColor": "#fff"
+      }
+    },
+    {
+      "path": "pages/homePage/index",
+      "type": "page",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "homePage"
+      }
+    },
+    {
+      "path": "pages/joinTeam/index",
+      "type": "page",
+      "style": {
+        "navigationBarTitleText": "加入队伍",
+        "navigationBarBackgroundColor": "#ffffff"
+      }
+    },
+    {
+      "path": "pages/login/index",
+      "type": "page",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "登录"
+      }
+    },
+    {
+      "path": "pages/message/index",
+      "type": "page",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "消息"
+      }
+    },
+    {
+      "path": "pages/mine/index",
+      "type": "page",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "我的"
+      }
+    },
+    {
+      "path": "pages/mine/myAblum",
+      "type": "page",
+      "style": {
+        "navigationBarTitleText": "我的相册",
+        "navigationBarBackgroundColor": "#fff"
+      }
+    },
+    {
+      "path": "pages/mine/myActivity",
+      "type": "page",
+      "style": {
+        "navigationBarTitleText": "我的活动",
+        "navigationBarBackgroundColor": "#fff"
+      }
+    },
+    {
+      "path": "pages/mine/myCollect",
+      "type": "page",
+      "style": {
+        "navigationBarTitleText": "我的收藏",
+        "navigationBarBackgroundColor": "#fff"
+      }
+    },
+    {
+      "path": "pages/publish/index",
+      "type": "page",
+      "style": {
+        "navigationBarTitleText": "发布",
+        "navigationBarBackgroundColor": "#ffffff"
+      }
+    },
+    {
+      "path": "pages/search/index",
+      "type": "page",
+      "style": {
+        "navigationBarTitleText": "搜索"
+      }
+    },
+    {
+      "path": "pages/settings/index",
+      "type": "page",
+      "style": {
+        "navigationBarTitleText": "个人资料"
+      }
+    },
+    {
+      "path": "pages/share/detail",
+      "type": "page",
+      "style": {
+        "navigationBarTitleText": "分享"
+      }
+    },
+    {
+      "path": "pages/share/index",
+      "type": "page",
+      "style": {
+        "navigationBarBackgroundColor": "#fff",
+        "backgroundColor": "#fff",
+        "navigationBarTextStyle": "white",
+        "navigationBarTitleText": ""
+      }
+    },
+    {
+      "path": "pages/teamDetail/index",
+      "type": "page",
+      "style": {
+        "navigationBarTitleText": "队伍详情"
+      }
+    },
+    {
+      "path": "pages/userSettings/index",
+      "type": "page",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "用户设置"
+      }
+    },
+    {
+      "path": "pages/withTeam/teamDetail",
+      "type": "page",
+      "style": {
+        "navigationBarTitleText": "队伍详情"
+      }
+    }
+  ],
+  "subPackages": [
+    {
+      "root": "pages-sub",
+      "pages": [
+        {
+          "path": "demo/index",
+          "type": "page",
+          "style": {
+            "navigationBarTitleText": "分包页面 标题"
+          }
+        }
+      ]
+    }
+  ]
+}
