@@ -11,7 +11,11 @@
     <view class="bg_box">
       <wd-img height="890rpx" width="750rpx" src="/static/images/common/bg.png"></wd-img>
     </view>
-    <view class="person-box">
+    <wd-navbar
+      safeAreaInsetTop
+      custom-style="background-color: transparent !important; z-index: 99"
+    />
+    <view class="main-box">
       <view class="mine-box">
         <view class="mine-left">
           <view class="avator">
@@ -52,14 +56,14 @@
           <view class="label">{{ i.name }}</view>
         </view>
       </view>
-    </view>
-    <view class="content-box">
-      <view class="content-item" v-for="(i, j) in contentList" :key="j" @click="toPage(i)">
-        <view class="icon">
-          <wd-img height="100%" width="100%" :src="i.iconUrl"></wd-img>
+      <view class="content-box">
+        <view class="content-item" v-for="(i, j) in contentList" :key="j" @click="toPage(i)">
+          <view class="icon">
+            <wd-img height="100%" width="100%" :src="i.iconUrl"></wd-img>
+          </view>
+          <view class="label">{{ i.name }}</view>
+          <wd-icon name="arrow-right" size="12px" color="#797979" />
         </view>
-        <view class="label">{{ i.name }}</view>
-        <wd-icon name="arrow-right" size="12px" color="#797979" />
       </view>
     </view>
     <tabbar :selected="4" />
@@ -152,21 +156,18 @@ onShow(async () => {
   height: 100vh;
 
   .bg_box {
-    position: relative;
-  }
-
-  .person-box {
     position: absolute;
-    width: 100%;
-    height: 37vh;
     top: 0;
     left: 0;
+  }
+
+  .main-box {
+    position: relative;
+    width: 100%;
 
     .mine-box {
       display: flex;
       align-items: center;
-      position: absolute;
-      bottom: 142rpx;
       width: 100%;
       padding: 0 20rpx;
       box-sizing: border-box;
@@ -218,18 +219,12 @@ onShow(async () => {
         }
 
         .mine-name {
-          font-family:
-            Source Han Sans,
-            Source Han Sans;
           font-weight: 500;
           font-size: 40rpx;
           color: #0b1526;
         }
 
         .mine-brif {
-          font-family:
-            Source Han Sans,
-            Source Han Sans;
           font-weight: 350;
           font-size: 24rpx;
           color: #8d93a6;
@@ -271,11 +266,9 @@ onShow(async () => {
     }
 
     .follow-box {
-      position: absolute;
-      bottom: 28rpx;
       display: flex;
       width: 100%;
-
+      margin-top: 28rpx;
       .follow-item {
         flex: 1;
         display: flex;
@@ -283,63 +276,61 @@ onShow(async () => {
         align-items: center;
 
         .num {
-          font-family:
-            Source Han Sans,
-            Source Han Sans;
           font-weight: 700;
           font-size: 40rpx;
           color: #0b1526;
         }
 
         .label {
-          font-family:
-            Source Han Sans,
-            Source Han Sans;
           font-weight: 350;
           font-size: 24rpx;
           color: #999999;
         }
       }
     }
-  }
 
-  .content-box {
-    position: absolute;
-    bottom: 0;
-    z-index: 99;
-    width: 100%;
-    height: 63vh;
-    background: #ffffff;
-    box-shadow: 0rpx 8rpx 20rpx 0rpx #cae5eb;
-    border-radius: 40rpx 40rpx 40rpx 40rpx;
-    padding: 32rpx 44rpx;
-    box-sizing: border-box;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-
-    .content-item {
-      display: flex;
-      align-items: center;
-      margin-bottom: 50rpx;
+    .content-box {
+      margin-top: 28rpx;
+      z-index: 99;
       width: 100%;
-    }
+      height: 63vh;
+      background: #ffffff;
+      box-shadow: 0rpx 8rpx 20rpx 0rpx #cae5eb;
+      border-radius: 40rpx 40rpx 40rpx 40rpx;
+      padding: 32rpx 44rpx;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
 
-    .icon {
-      width: 40rpx;
-      height: 38rpx;
-    }
+      .content-item {
+        display: flex;
+        align-items: center;
+        margin-bottom: 50rpx;
+        width: 100%;
+      }
 
-    .label {
-      font-family:
-        Source Han Sans,
-        Source Han Sans;
-      font-weight: 400;
-      font-size: 32rpx;
-      color: #333333;
-      flex: 1;
-      margin-left: 6rpx;
+      .icon {
+        width: 40rpx;
+        height: 38rpx;
+      }
+
+      .label {
+        font-family:
+          Source Han Sans,
+          Source Han Sans;
+        font-weight: 400;
+        font-size: 32rpx;
+        color: #333333;
+        flex: 1;
+        margin-left: 6rpx;
+      }
     }
+  }
+}
+:deep() {
+  .wd-navbar.is-border::after {
+    display: none;
   }
 }
 </style>
