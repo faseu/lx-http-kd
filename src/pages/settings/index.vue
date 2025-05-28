@@ -78,7 +78,7 @@
             label-width="100px"
             :maxlength="20"
             prop="name"
-            v-model="model.name"
+            v-model="model.urgent_name"
             placeholder="请输入紧急联系人"
           />
           <wd-input
@@ -87,7 +87,7 @@
             label-width="100px"
             :maxlength="11"
             prop="phone"
-            v-model="model.phone"
+            v-model="model.urgent_phone"
             placeholder="请输入紧急联系人电话"
           />
         </wd-cell-group>
@@ -97,11 +97,12 @@
 </template>
 
 <script lang="js" setup>
+import { reactive, ref } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { httpGet, httpPost } from '@/utils/http'
-import { reactive, ref } from 'vue'
 import { getIsTabbar, getEnvBaseUrl } from '@/utils'
 import { sexList } from '@/utils/config'
+const { run: runGetUserInfo } = useRequest((e) => httpGet('/api/get_user'))
 
 const form = ref()
 
@@ -146,6 +147,7 @@ onShow(async () => {
   if (getIsTabbar()) {
     uni?.hideTabBar()
   }
+  await runGetUserInfo()
 })
 </script>
 
