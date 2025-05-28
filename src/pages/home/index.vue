@@ -1,9 +1,9 @@
-<route lang="json5" type="home">
+<route lang="json5">
 {
-style: {
-navigationStyle: 'custom',
-navigationBarTitleText: '',
-},
+  style: {
+    navigationStyle: 'custom',
+    navigationBarTitleText: '',
+  },
 }
 </route>
 
@@ -29,6 +29,13 @@ navigationBarTitleText: '',
           <view class="title-box">
             <p>蹭现在 · 找个搭子</p>
           </view>
+          <view class="pos-absolute top-0 left-0 w-100vw h-890rpx overflow-hidden">
+            <image class="w-750rpx h-1624rpx" src="/static/images/common/bg2.png" />
+          </view>
+          <image
+            class="pos-absolute top-64rpx left-340rpx w-224rpx h-200rpx"
+            src="/static/images/common/plane.png"
+          />
           <image class="bg-img" src="/static/images/homepage/index_bg.png" />
           <view class="flex flex-col w-full pos-relative z-index-100">
             <view class="function-box">
@@ -45,8 +52,15 @@ navigationBarTitleText: '',
             <view class="btm_top">
               <view class="w-[350rpx] flex justify-between">
                 <!-- 一日徒步选择器 -->
-                <wd-picker :columns="hikingColumns" v-model="selectedHiking" use-default-slot @confirm="handleHikingConfirm">
-                  <view class="flex justify-between items-center w-[170rpx] h-[48rpx] bg-[#E7F0F6] rounded-[24rpx] px-[20rpx] box-border">
+                <wd-picker
+                  :columns="hikingColumns"
+                  v-model="selectedHiking"
+                  use-default-slot
+                  @confirm="handleHikingConfirm"
+                >
+                  <view
+                    class="flex justify-between items-center w-[170rpx] h-[48rpx] bg-[#E7F0F6] rounded-[24rpx] px-[20rpx] box-border"
+                  >
                     <view class="flex-1 flex justify-center text-24rpx">
                       {{ selectedHiking || '全部' }}
                     </view>
@@ -58,8 +72,15 @@ navigationBarTitleText: '',
                   </view>
                 </wd-picker>
                 <!-- 时间选择器 -->
-                <wd-picker :columns="dateColumns" v-model="selectedDateRange" use-default-slot @confirm="handleDateConfirm">
-                  <view class="flex justify-between items-center w-[170rpx] h-[48rpx] bg-[#E7F0F6] rounded-[24rpx] px-[20rpx] box-border">
+                <wd-picker
+                  :columns="dateColumns"
+                  v-model="selectedDateRange"
+                  use-default-slot
+                  @confirm="handleDateConfirm"
+                >
+                  <view
+                    class="flex justify-between items-center w-[170rpx] h-[48rpx] bg-[#E7F0F6] rounded-[24rpx] px-[20rpx] box-border"
+                  >
                     <view class="flex-1 flex justify-center text-24rpx">
                       {{ selectedDateRange || '全部' }}
                     </view>
@@ -89,8 +110,6 @@ navigationBarTitleText: '',
         <tabbar :selected="0" />
       </template>
     </z-paging>
-
-
   </view>
 </template>
 
@@ -104,7 +123,7 @@ import { getIsTabbar } from '@/utils'
 
 const paging = ref(null)
 const functionList = ref([])
-let tmpClassify = 'preview'
+const tmpClassify = 'preview'
 
 // 筛选相关状态
 const selectedHiking = ref('全部')
@@ -266,36 +285,6 @@ const goToSearch = () => {
     }
   }
 
-  .nav-box {
-    display: flex;
-    align-items: center;
-    margin-bottom: 20rpx;
-
-    .tab-box {
-      flex: 1;
-      height: 56rpx;
-      margin-top: -30rpx;
-    }
-
-    .search-box {
-      width: 336rpx;
-      height: 56rpx;
-      background: #ffffff;
-      border-radius: 250rpx 250rpx 250rpx 250rpx;
-      border: 2rpx solid #000000;
-      display: flex;
-      align-items: center;
-      padding: 0 6rpx 0 20rpx;
-
-      .search-input {
-        flex: 1;
-        font-weight: 400;
-        font-size: 28rpx;
-        color: #999999;
-      }
-    }
-  }
-
   .content-box {
     margin-top: 20rpx;
     padding: 0 30rpx;
@@ -322,6 +311,7 @@ input {
   .wd-navbar.is-border::after {
     display: none;
   }
+
   .wd-picker__wraper {
     margin-bottom: 150rpx;
   }

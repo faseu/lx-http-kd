@@ -1,4 +1,4 @@
-<route lang="json5">
+<route lang="json5" type="home">
 {
   style: {
     navigationStyle: 'custom',
@@ -9,7 +9,7 @@
 <template>
   <view class="main">
     <view class="bg_box">
-      <wd-img height="890rpx" width="750rpx" src="/static/images/common/bg.png"></wd-img>
+      <image class="w-750rpx h-1624rpx" src="/static/images/common/bg2.png" />
     </view>
     <wd-navbar
       safeAreaInsetTop
@@ -157,8 +157,11 @@ onShow(async () => {
 
   .bg_box {
     position: absolute;
+    width: 750rpx;
+    height: 890rpx;
     top: 0;
     left: 0;
+    overflow: hidden;
   }
 
   .main-box {
@@ -239,10 +242,6 @@ onShow(async () => {
             padding: 6rpx 8rpx;
             box-sizing: border-box;
             border-radius: 8rpx 8rpx 8rpx 8rpx;
-
-            font-family:
-              Source Han Sans,
-              Source Han Sans;
             font-weight: 350;
             font-size: 20rpx;
           }
@@ -316,9 +315,6 @@ onShow(async () => {
       }
 
       .label {
-        font-family:
-          Source Han Sans,
-          Source Han Sans;
         font-weight: 400;
         font-size: 32rpx;
         color: #333333;

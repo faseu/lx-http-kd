@@ -102,7 +102,7 @@
 
     <view
       class="flex justify-center items-center w-full h-60rpx border border-solid border-[#333333] rounded-30rpx font-bold"
-      @click="showInsuranceDetail"
+      @click="goToInsuranceDetail"
     >
       查看保险方案>>
     </view>
@@ -179,13 +179,8 @@ const selectInsurance = (type) => {
 }
 
 // 查看保险详情
-const showInsuranceDetail = () => {
-  uni.showModal({
-    title: selectedInsurance.value.name,
-    content: `保障内容：\n${selectedInsurance.value.features.join('\n')}\n\n保障金额：${selectedInsurance.value.coverage}万元\n保费：￥${selectedInsurance.value.price}/人`,
-    showCancel: false,
-    confirmText: '知道了',
-  })
+const goToInsuranceDetail = () => {
+  uni.navigateTo({ url: `/pages/insuranceDetail/index` })
 }
 
 // 监听选中保险变化，初始化时也要触发一次

@@ -16,9 +16,9 @@ onShow(() => {
   }
 
   console.log('App Show')
-  if (!token) {
-    uni.reLaunch({ url: '/pages/login/index' })
-  }
+  // if (!token) {
+  //   uni.reLaunch({ url: '/pages/login/index' })
+  // }
 })
 onHide(() => {
   console.log('App Hide')
