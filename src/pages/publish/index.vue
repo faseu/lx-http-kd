@@ -93,7 +93,7 @@
           label-width="100px"
           placeholder="请选择时间"
           prop="start_time"
-          :minDate="new Date().getTime()"
+          :minDate="Date.now()"
           v-model="model.start_time"
         />
         <wd-datetime-picker
@@ -101,7 +101,7 @@
           label-width="100px"
           placeholder="请选择时间"
           prop="end_time"
-          :minDate="new Date().getTime()"
+          :minDate="Date.now()"
           v-model="model.end_time"
         />
         <wd-picker
@@ -313,8 +313,8 @@ onLoad(async (options) => {
 const initialModel = {
   title: '活动名',
   location: '不不不',
-  start_time: 1748066867132,
-  end_time: 1748278800000,
+  start_time: new Date(),
+  end_time: new Date(),
   hiking_type: '休闲徒步',
   hiking_distance: 12,
   hiking_duration: 5,
@@ -345,6 +345,27 @@ const initialModel = {
 const model = reactive({
   ...initialModel,
 })
+
+// 1. 在 script 部分添加时间校验函数
+const validateTimeRange = () => {
+  const now = new Date()
+  const startTime = model.start_time
+  const endTime = model.end_time
+
+  // 检查开始时间是否大于当前时间
+  if (startTime <= now) {
+    toast.show('开始时间必须大于当前时间')
+    return false
+  }
+
+  // 检查结束时间是否大于开始时间
+  if (endTime <= startTime) {
+    toast.show('结束时间必须大于开始时间')
+    return false
+  }
+
+  return true
+}
 
 const getRules = () => ({
   // 活动信息
@@ -391,8 +412,12 @@ const getRules = () => ({
 const form = ref()
 
 const handleSubmit = async () => {
+  // 先进行时间范围校验
+  if (!validateTimeRange()) {
+    return
+  }
   const { valid, errors } = await form.value.validate()
-  console.log(model)
+
   const allSuccess =
     model?.fileList?.length > 0 && model?.fileList?.every((item) => item.status === 'success')
   if (!allSuccess) {
