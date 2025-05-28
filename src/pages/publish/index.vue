@@ -23,7 +23,7 @@
         <wd-input
           label="活动名称"
           label-width="100px"
-          :maxlength="10"
+          :maxlength="50"
           prop="title"
           v-model="model.title"
           placeholder="请输入活动名称"

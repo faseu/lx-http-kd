@@ -7,24 +7,17 @@
 </route>
 <template>
   <view class="w-full min-h-100vh bg-[#F6F8FA] box-border text-24rpx color-[#333]">
-    <image
-      class="w-full h-374rpx"
-      :src="teamDetail?.activity_images?.[0] || 'https://temp.im/750x374'"
-      mode="aspectFill"
-    />
+    <view class="banner-container">
+      <image
+        class="banner-image"
+        :class="{ 'banner-vertical': isVerticalImage }"
+        :src="teamDetail?.activity_images?.[0] || 'https://temp.im/750x374'"
+        mode="aspectFill"
+        @load="handleImageLoad"
+        @error="handleImageError"
+      />
+    </view>
     <view class="p-30rpx w-full box-border">
-      <!-- 活动图片轮播 -->
-      <!--      <view-->
-      <!--        class="w-full bg-white p-24rpx box-border rounded-20rpx"-->
-      <!--        v-if="teamDetail?.activity_images?.length"-->
-      <!--      >-->
-      <!--        <swiper class="w-full h-300rpx rounded-20rpx" autoplay indicator-dots>-->
-      <!--          <swiper-item v-for="(image, index) in teamDetail.activity_images" :key="index">-->
-      <!--            <image class="w-full h-full" :src="image" mode="aspectFill" />-->
-      <!--          </swiper-item>-->
-      <!--        </swiper>-->
-      <!--      </view>-->
-
       <!-- 活动基本信息 -->
       <view
         class="w-full bg-white p-24rpx box-border rounded-20rpx"
@@ -174,7 +167,6 @@
             :src="member?.user_info?.avatar || 'https://temp.im/60x60'"
           />
         </view>
-
       </view>
 
       <!-- 车主信息 -->
@@ -289,6 +281,28 @@
           注：平台不收取任何费用，但为确保搭子安全需购买保险，加入队伍需预支付保险费用，活动开始24小时前可退款
         </view>
       </view>
+
+      <!-- 活动图片展示（除第一张外的其他图片） -->
+      <view
+        class="mt-20rpx w-full bg-white p-24rpx box-border rounded-20rpx"
+        v-if="remainingImages && remainingImages.length > 0"
+      >
+        <view class="text-28rpx font-bold mb-20rpx">更多活动图片</view>
+        <view class="grid grid-cols-2 gap-12rpx">
+          <view
+            v-for="(image, index) in remainingImages"
+            :key="index"
+            class="w-full h-200rpx rounded-12rpx overflow-hidden"
+          >
+            <image
+              class="w-full h-full"
+              :src="image"
+              mode="aspectFill"
+              @click="previewImage(image, remainingImages)"
+            />
+          </view>
+        </view>
+      </view>
     </view>
     <wd-gap safe-area-bottom height="150rpx"></wd-gap>
     <view class="footer bg-white">
@@ -321,6 +335,7 @@ import { ref, computed } from 'vue'
 
 const id = ref(null)
 const teamDetail = ref(null)
+const isVerticalImage = ref(false) // 判断是否为竖图
 
 const { run: runGetList } = useRequest((e) => httpGet(`/api/team/user/detail/${e.id}`))
 
@@ -331,6 +346,14 @@ const hasDrivers = computed(() => {
 
 const drivers = computed(() => {
   return teamDetail.value?.members_info?.filter((member) => member.is_driver) || []
+})
+
+// 计算除第一张外的其他活动图片
+const remainingImages = computed(() => {
+  if (!teamDetail.value?.activity_images || teamDetail.value.activity_images.length <= 1) {
+    return []
+  }
+  return teamDetail.value.activity_images.slice(1)
 })
 
 // 格式化日期时间
@@ -423,6 +446,28 @@ const share = () => {
     imageUrl: 'https://temp.im/200x200',
   })
 }
+
+// 预览图片
+const previewImage = (current, urls) => {
+  uni.previewImage({
+    current,
+    urls,
+  })
+}
+
+// 处理图片加载完成事件，判断图片方向
+const handleImageLoad = (e) => {
+  const { width, height } = e.detail
+  // 如果高度大于宽度，则为竖图
+  isVerticalImage.value = height > width
+  console.log('图片尺寸:', { width, height, isVertical: isVerticalImage.value })
+}
+
+// 处理图片加载错误
+const handleImageError = (e) => {
+  console.error('图片加载失败:', e)
+  isVerticalImage.value = false // 错误时默认为横图
+}
 </script>
 
 <style lang="scss">
@@ -447,5 +492,41 @@ const share = () => {
   background: #f8f9fa;
   width: 2rpx;
   height: 100%;
+}
+
+// 头部图片容器样式
+.banner-container {
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+.banner-image {
+  width: 100%;
+  height: 374rpx; // 默认横图高度
+  object-fit: cover;
+  display: block;
+
+  // 竖图样式
+  &.banner-vertical {
+    height: 600rpx; // 竖图高度更高
+  }
+}
+
+// 网格布局样式（兼容性更好的写法）
+.grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+}
+
+.grid-cols-2 {
+  > view {
+    width: calc(50% - 6rpx);
+  }
+}
+
+.gap-12rpx {
+  gap: 12rpx;
 }
 </style>
