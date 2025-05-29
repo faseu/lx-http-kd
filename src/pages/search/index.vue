@@ -177,28 +177,13 @@ const queryList = async (pageNo, pageSize) => {
     // 活动数据
     const { list } = await runGetList({ pageNo, pageSize })
 
-    // 将activity_type与分类列表id对比，添加activity_type_word字段
-    if (list && list.length > 0 && functionList.value && functionList.value.length > 0) {
-      list.forEach((item) => {
-        const matchedCategory = functionList.value.find(
-          (category) => category.id === item.activity_type,
-        )
-        if (matchedCategory) {
-          item.activity_type_word = matchedCategory.name
-        } else {
-          item.activity_type_word = '未分类'
-        }
-      })
-    }
-
-    activityDataList.value = [...activityDataList.value, ...list]
     paging.value.complete(list)
   } else if (tab.value === 2) {
     // 精彩瞬间数据
     const { data_list } = await runGetMomentsList({ page: pageNo, page_size: pageSize })
 
     if (data_list && data_list.length > 0) {
-      momentsDataList.value = [...momentsDataList.value, ...data_list]
+      momentsDataList.value = [...data_list]
       // 重新分配到左右两列
       redistributeToColumns()
     }
@@ -247,8 +232,6 @@ onShow(async () => {
   if (getIsTabbar()) {
     uni?.hideTabBar()
   }
-  const value2 = await runGetCategoriesList()
-  functionList.value = value2?.list
 })
 
 const changeTab = (value) => {
