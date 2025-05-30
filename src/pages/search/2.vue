@@ -51,29 +51,89 @@
         </view>
       </template>
 
-      <swiper
-        class="swiper"
-        :current="tab"
-        @transition="swiperTransition"
-        @animationfinish="swiperAnimationfinish"
-      >
-        <swiper-item class="swiper-item" :key="index">
-          <!-- 这里的swiper-list-item为demo中为演示用定义的组件，列表及分页代码在swiper-list-item组件内 -->
-          <!-- 请注意，swiper-list-item非z-paging内置组件，在自己的项目中必须自己创建，若未创建则会报组件不存在的错误 -->
-          <swiperListItem :tabIndex="1" :currentIndex="tab"></swiperListItem>
-        </swiper-item>
-        <swiper-item class="swiper-item" :key="index">
-          <!-- 这里的swiper-list-item为demo中为演示用定义的组件，列表及分页代码在swiper-list-item组件内 -->
-          <!-- 请注意，swiper-list-item非z-paging内置组件，在自己的项目中必须自己创建，若未创建则会报组件不存在的错误 -->
-          <swiperListItem :tabIndex="2" :currentIndex="tab"></swiperListItem>
-        </swiper-item>
-      </swiper>
+      <!-- 活动列表 -->
+      <view class="content-box" v-if="tab === 1">
+        <view v-for="item in dataList" :key="item.id">
+          <activeItem :item="item" />
+        </view>
+      </view>
+
+      <!-- 精彩瞬间瀑布流 -->
+      <view class="waterfall-container" v-if="tab === 2">
+        <view class="waterfall-column">
+          <view
+            class="waterfall-item"
+            v-for="item in leftColumnData"
+            :key="item.id"
+            @click="toMomentDetail(item)"
+          >
+            <view class="waterfall-image">
+              <image :src="item.cover_image" mode="widthFix" @load="onImageLoad($event, item)" />
+            </view>
+            <view class="waterfall-content">
+              <view class="waterfall-title">{{ item.title }}</view>
+              <view class="waterfall-info">
+                <view class="waterfall-author">
+                  <image class="author-avatar" :src="item.uploader?.avatar" mode="aspectFill" />
+                  <text class="author-name">{{ item.uploader?.nickname }}</text>
+                </view>
+                <view class="waterfall-likes">
+                  <image
+                    class="like-icon"
+                    :src="
+                      item.is_liked
+                        ? '/static/images/homepage/like.png'
+                        : '/static/images/homepage/unlike.png'
+                    "
+                    @click.stop="likeMoment(item)"
+                  />
+                  <text class="like-count">{{ item.likes_count }}</text>
+                </view>
+              </view>
+            </view>
+          </view>
+        </view>
+
+        <view class="waterfall-column">
+          <view
+            class="waterfall-item"
+            v-for="item in rightColumnData"
+            :key="item.id"
+            @click="toMomentDetail(item)"
+          >
+            <view class="waterfall-image">
+              <image :src="item.cover_image" mode="widthFix" @load="onImageLoad($event, item)" />
+            </view>
+            <view class="waterfall-content">
+              <view class="waterfall-title">{{ item.title }}</view>
+              <view class="waterfall-info">
+                <view class="waterfall-author">
+                  <image class="author-avatar" :src="item.uploader?.avatar" mode="aspectFill" />
+                  <text class="author-name">{{ item.uploader?.nickname }}</text>
+                </view>
+                <view class="waterfall-likes">
+                  <image
+                    class="like-icon"
+                    :src="
+                      item.is_liked
+                        ? '/static/images/homepage/like.png'
+                        : '/static/images/homepage/unlike.png'
+                    "
+                    @click.stop="likeMoment(item)"
+                  />
+                  <text class="like-count">{{ item.likes_count }}</text>
+                </view>
+              </view>
+            </view>
+          </view>
+        </view>
+      </view>
     </z-paging-swiper>
   </view>
 </template>
 
 <script lang="js" setup>
-import swiperListItem from '@/components/swiper-list-item/index.vue'
+import activeItem from '@/components/active-item/index.vue'
 import { onShow } from '@dcloudio/uni-app'
 import { httpGet, httpPost } from '@/utils/http'
 import { ref } from 'vue'
@@ -228,9 +288,6 @@ const toMomentDetail = (item) => {
 </script>
 
 <style scoped lang="scss">
-.swiper {
-  height: 100%;
-}
 .main_container {
   width: 100vw;
   height: 100vh;

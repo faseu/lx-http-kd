@@ -14,7 +14,7 @@
         <view class="text-28rpx font-bold p-10rpx pb-24rpx">基本设置</view>
 
         <wd-cell-group border custom-class="rounded-20rpx overflow-hidden">
-          <wd-cell title="头像">
+          <wd-cell title="头像" required>
             <wd-button
               type="text"
               open-type="chooseAvatar"
@@ -56,8 +56,8 @@
             label="姓名"
             label-width="100px"
             :maxlength="20"
-            prop="name"
-            v-model="model.name"
+            prop="real_name"
+            v-model="model.real_name"
             placeholder="请输入姓名"
           />
           <wd-input
@@ -65,8 +65,8 @@
             type="idcard"
             label-width="100px"
             :maxlength="18"
-            prop="id_card"
-            v-model="model.id_card"
+            prop="id_card_number"
+            v-model="model.id_card_number"
             placeholder="请输入身份证号码"
           />
           <wd-input
@@ -82,17 +82,17 @@
             label="紧急联系人"
             label-width="100px"
             :maxlength="20"
-            prop="urgent_name"
-            v-model="model.urgent_name"
+            prop="emergency_contact"
+            v-model="model.emergency_contact"
             placeholder="请输入紧急联系人"
           />
           <wd-input
-            label="紧急联系人电话"
+            label="紧急联系电话"
             type="number"
             label-width="100px"
             :maxlength="11"
-            prop="urgent_phone"
-            v-model="model.urgent_phone"
+            prop="emergency_contact_phone"
+            v-model="model.emergency_contact_phone"
             placeholder="请输入紧急联系人电话"
           />
         </wd-cell-group>
@@ -137,7 +137,7 @@ const genderList = ref([
 // 请求用户信息
 const { data: userInfo, run: runGetUserInfo } = useRequest(() => httpGet('/api/get_user'))
 // 更新用户信息
-const { run: runUpdateUserInfo } = useRequest((data) => httpPost('/api/update_user', data))
+const { run: runUpdateUserInfo } = useRequest((data) => httpPost('/api/get_user', data))
 
 const form = ref()
 
@@ -146,11 +146,11 @@ const model = reactive({
   avatar: '',
   nickname: '',
   gender: '',
-  name: '',
-  id_card: '',
+  real_name: '',
+  id_card_number: '',
   phone_number: '',
-  urgent_name: '',
-  urgent_phone: '',
+  emergency_contact: '',
+  emergency_contact_phone: '',
 })
 
 // 表单验证规则
@@ -160,11 +160,11 @@ const getRules = () => ({
     { min: 2, max: 20, message: '昵称长度为2-20个字符' },
   ],
   gender: [{ required: true, message: '请选择性别' }],
-  name: [
+  real_name: [
     { required: true, message: '请输入姓名' },
     { pattern: /^[\u4e00-\u9fa5]{2,10}$/, message: '请输入2-10位中文姓名' },
   ],
-  id_card: [
+  id_card_number: [
     { required: true, message: '请输入身份证号码' },
     { pattern: /(^\d{15}$)|(^\d{18}$)|(^\d{17}(\d|X|x)$)/, message: '请输入有效的身份证号码' },
   ],
@@ -172,11 +172,11 @@ const getRules = () => ({
     { required: true, message: '请输入联系电话' },
     { pattern: /^1[3-9]\d{9}$/, message: '请输入有效的手机号码' },
   ],
-  urgent_name: [
+  emergency_contact: [
     { required: true, message: '请输入紧急联系人' },
     { pattern: /^[\u4e00-\u9fa5]{2,10}$/, message: '请输入2-10位中文姓名' },
   ],
-  urgent_phone: [
+  emergency_contact_phone: [
     { required: true, message: '请输入紧急联系人电话' },
     { pattern: /^1[3-9]\d{9}$/, message: '请输入有效的手机号码' },
   ],

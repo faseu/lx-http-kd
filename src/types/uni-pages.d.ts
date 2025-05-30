@@ -18,6 +18,7 @@ interface NavigateToOptions {
        "/pages/mine/myActivity" |
        "/pages/mine/myCollect" |
        "/pages/publish/index" |
+       "/pages/search/2" |
        "/pages/search/index" |
        "/pages/settings/index" |
        "/pages/share/detail" |

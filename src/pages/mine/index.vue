@@ -20,12 +20,7 @@
         <view class="mine-left">
           <view class="avator">
             <view class="avator-img">
-              <wd-img
-                width="100%"
-                height="100%"
-                round
-                src="https://registry.npmmirror.com/wot-design-uni-assets/*/files/meng.jpg"
-              />
+              <wd-img width="100%" height="100%" round :src="userInfo?.avatar" />
             </view>
             <view class="edit-img">
               <wd-img width="100%" height="100%" src="/static/images/mine/edit-btn.png" />
@@ -36,13 +31,12 @@
           <view class="setting-btn" @click="goToSettings">
             <wd-img width="100%" height="100%" src="/static/images/mine/setting-btn.png" />
           </view>
-          <view class="mine-name">{{ mineName }}</view>
-          <view class="mine-brif">{{ mineBrif }}</view>
+          <view class="mine-name">{{ userInfo?.nickname }}</view>
           <view class="mine-type">
             <view
               class="type-item"
               :class="[j % 3 == 0 ? 'blue' : j % 3 == 1 ? 'brown' : 'purple']"
-              v-for="(i, j) in mineType"
+              v-for="(i, j) in userInfo?.hobbies"
               :key="j"
             >
               {{ i }}
@@ -75,8 +69,10 @@
 import tabbar from '@/components/tabbar/index.vue'
 import { useToast } from 'wot-design-uni'
 import { onShow } from '@dcloudio/uni-app'
+import { httpGet } from '@/utils/http'
 import { getIsTabbar } from '@/utils'
-
+// 请求用户信息
+const { data: userInfo, run: runGetUserInfo } = useRequest(() => httpGet('/api/get_user'))
 defineOptions({
   name: 'mine',
 })
@@ -147,6 +143,7 @@ onShow(async () => {
   if (getIsTabbar()) {
     uni?.hideTabBar()
   }
+  await runGetUserInfo()
 })
 </script>
 

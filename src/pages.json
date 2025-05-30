@@ -161,6 +161,13 @@
       }
     },
     {
+      "path": "pages/search/2",
+      "type": "page",
+      "style": {
+        "navigationBarTitleText": "搜索"
+      }
+    },
+    {
       "path": "pages/search/index",
       "type": "page",
       "style": {
