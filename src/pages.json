@@ -51,11 +51,11 @@
   },
   "pages": [
     {
-      "path": "pages/mine/index",
+      "path": "pages/home/index",
       "type": "home",
       "style": {
         "navigationStyle": "custom",
-        "navigationBarTitleText": "我的"
+        "navigationBarTitleText": ""
       }
     },
     {
@@ -63,14 +63,6 @@
       "type": "page",
       "style": {
         "navigationBarTitleText": "聊天室"
-      }
-    },
-    {
-      "path": "pages/home/index",
-      "type": "page",
-      "style": {
-        "navigationStyle": "custom",
-        "navigationBarTitleText": ""
       }
     },
     {
@@ -129,6 +121,14 @@
       }
     },
     {
+      "path": "pages/mine/index",
+      "type": "page",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "我的"
+      }
+    },
+    {
       "path": "pages/mine/myAblum",
       "type": "page",
       "style": {
@@ -158,13 +158,6 @@
       "style": {
         "navigationBarTitleText": "发布",
         "navigationBarBackgroundColor": "#ffffff"
-      }
-    },
-    {
-      "path": "pages/search/2",
-      "type": "page",
-      "style": {
-        "navigationBarTitleText": "搜索"
       }
     },
     {

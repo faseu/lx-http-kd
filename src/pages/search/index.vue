@@ -8,13 +8,7 @@
 
 <template>
   <view class="main_container">
-    <z-paging-swiper
-      ref="paging"
-      :fixed="false"
-      :show-scrollbar="false"
-      v-model="dataList"
-      @query="queryList"
-    >
+    <z-paging-swiper>
       <template #top>
         <view class="w-full px-30rpx mt-20rpx box-border">
           <view class="flex h-72rpx items-center bg-white rounded-10rpx">
@@ -22,17 +16,17 @@
               <wd-icon color="#666" name="search" size="24rpx"></wd-icon>
             </view>
             <view class="flex-1">
-              <wd-input placeholder="请输入搜索内容" />
+              <wd-input v-model="searchKeyword" placeholder="请输入搜索内容" />
             </view>
-            <view class="text-28rpx color-[#009DFF] p-x-30rpx">取消</view>
+            <view class="text-28rpx color-[#009DFF] p-x-30rpx" @click="goBack">取消</view>
           </view>
-          <view class="mt-30rpx flex items-center h-60rpx">
+          <view class="mt-30rpx flex items-center h-74rpx">
             <view
               :class="{
                 'tab w-80rpx mr-60rpx': true,
-                'tab-active': tab === 1,
+                'tab-active': tab === 0,
               }"
-              @click="() => changeTab(1)"
+              @click="() => changeTab(0)"
             >
               活动
             </view>
@@ -40,9 +34,9 @@
               <view
                 :class="{
                   'tab w-160rpx': true,
-                  'tab-active': tab === 2,
+                  'tab-active': tab === 1,
                 }"
-                @click="() => changeTab(2)"
+                @click="() => changeTab(1)"
               >
                 精彩瞬间
               </view>
@@ -56,16 +50,17 @@
         :current="tab"
         @transition="swiperTransition"
         @animationfinish="swiperAnimationfinish"
+        duration="150"
       >
         <swiper-item class="swiper-item" :key="index">
           <!-- 这里的swiper-list-item为demo中为演示用定义的组件，列表及分页代码在swiper-list-item组件内 -->
           <!-- 请注意，swiper-list-item非z-paging内置组件，在自己的项目中必须自己创建，若未创建则会报组件不存在的错误 -->
-          <swiperListItem :tabIndex="1" :currentIndex="tab"></swiperListItem>
+          <listItem :tabIndex="0" :currentIndex="tab"></listItem>
         </swiper-item>
         <swiper-item class="swiper-item" :key="index">
           <!-- 这里的swiper-list-item为demo中为演示用定义的组件，列表及分页代码在swiper-list-item组件内 -->
           <!-- 请注意，swiper-list-item非z-paging内置组件，在自己的项目中必须自己创建，若未创建则会报组件不存在的错误 -->
-          <swiperListItem :tabIndex="2" :currentIndex="tab"></swiperListItem>
+          <listItem :tabIndex="1" :currentIndex="tab"></listItem>
         </swiper-item>
       </swiper>
     </z-paging-swiper>
@@ -73,105 +68,24 @@
 </template>
 
 <script lang="js" setup>
-import swiperListItem from '@/components/swiper-list-item/index.vue'
+import listItem from '@/components/list-item/index.vue'
+import activeItem from '@/components/active-item/index.vue'
 import { onShow } from '@dcloudio/uni-app'
-import { httpGet, httpPost } from '@/utils/http'
 import { ref } from 'vue'
 import { getIsTabbar } from '@/utils'
+import { httpGet, httpPost } from '@/utils/http'
 
 const paging = ref(null)
-const tab = ref(0)
-const functionList = ref([])
-const tmpClassify = 'preview'
-
-// 活动数据
-const activityDataList = ref([])
-// 精彩瞬间数据
-const momentsDataList = ref([])
-const leftColumnData = ref([])
-const rightColumnData = ref([])
-
-const { run: runGetList } = useRequest((e) =>
-  httpGet('/api/hiking_list', {
-    page: e.pageNo,
-    page_size: e.pageSize,
-    classify: tmpClassify,
-  }),
-)
-
-// 请求精彩瞬间列表
-const { run: runGetMomentsList } = useRequest((e) =>
-  httpGet('/api/album/list', {
-    page: e.pageNo,
-    page_size: e.pageSize,
-  }),
-)
-
 const dataList = ref([])
 
-// 请求活动列表
-const queryList = async (pageNo, pageSize) => {
-  if (tab.value === 1) {
-    // 活动数据
-    const { list } = await runGetList({ pageNo, pageSize })
-
-    paging.value.complete(list)
-  } else if (tab.value === 2) {
-    // 精彩瞬间数据
-    const { data_list } = await runGetMomentsList({ pageNo, pageSize })
-
-    if (data_list && data_list.length > 0) {
-      if (pageNo === 1) {
-        // 首次加载或刷新：替换数据
-        momentsDataList.value = [...data_list]
-      } else {
-        // 加载更多：追加数据
-        momentsDataList.value = [...momentsDataList.value, ...data_list]
-      }
-
-      // 重新分配到左右两列
-      redistributeToColumns()
-    }
-    paging.value.complete(data_list)
-  }
-}
-
-// 瀑布流分列逻辑
-const redistributeToColumns = () => {
-  const leftColumn = []
-  const rightColumn = []
-  let leftHeight = 0
-  let rightHeight = 0
-
-  momentsDataList.value.forEach((item) => {
-    // 估算每个item的高度（图片高度 + 内容高度）
-    const contentHeight = 140 // 内容区域固定高度
-    const imageHeight = item.imageHeight || 300 // 如果没有图片高度，使用默认值
-    const totalHeight = imageHeight + contentHeight
-
-    // 选择高度较小的列
-    if (leftHeight <= rightHeight) {
-      leftColumn.push(item)
-      leftHeight += totalHeight
-    } else {
-      rightColumn.push(item)
-      rightHeight += totalHeight
-    }
-  })
-
-  leftColumnData.value = leftColumn
-  rightColumnData.value = rightColumn
-}
-
-// 图片加载完成回调
-const onImageLoad = (event, item) => {
-  const { height, width } = event.detail
-  // 计算按宽度332rpx缩放后的高度
-  item.imageHeight = (height * 332) / width
-  // 重新分配列表
-  redistributeToColumns()
-}
-
+const tab = ref(0) // 默认选中活动tab
+const searchKeyword = ref('') // 搜索关键词
+const { run: runGetList } = useRequest((e) =>
+  httpGet('/api/team/all', {
+    page: e.pageNo,
+    page_size: e.pageSize,
+  }),
+)
 onShow(async () => {
   if (getIsTabbar()) {
     uni?.hideTabBar()
@@ -180,50 +94,43 @@ onShow(async () => {
 
 const changeTab = (value) => {
   tab.value = value
-  // 切换标签时重置数据
-  if (value === 1) {
-    dataList.value = activityDataList.value
-  } else if (value === 2) {
-    dataList.value = momentsDataList.value
-    // 如果精彩瞬间数据为空，重新加载
-    if (momentsDataList.value.length === 0) {
-      paging.value?.reload()
-    }
-  }
 }
 
-// 点赞精彩瞬间
-const likeMoment = async (item) => {
-  try {
-    const tmpUrl = `/api/album/like/${item.id}`
-    await httpPost(tmpUrl, {})
-
-    // 更新点赞状态
-    item.is_liked = !item.is_liked
-    item.likes_count += item.is_liked ? 1 : -1
-
-    // 同步更新各个数据源
-    const updateItem = (list) => {
-      const targetItem = list.find((i) => i.id === item.id)
-      if (targetItem) {
-        targetItem.is_liked = item.is_liked
-        targetItem.likes_count = item.likes_count
-      }
-    }
-
-    updateItem(momentsDataList.value)
-    updateItem(leftColumnData.value)
-    updateItem(rightColumnData.value)
-  } catch (error) {
-    console.error('点赞失败:', error)
+// 请求活动列表
+const queryList = async (pageNo, pageSize) => {
+  // 构建查询参数
+  const queryParams = {
+    pageNo,
+    pageSize,
   }
+
+  const { list } = await runGetList(queryParams)
+  console.log(list)
+  paging.value.complete(list)
 }
 
-// 跳转到精彩瞬间详情
-const toMomentDetail = (item) => {
-  uni.navigateTo({
-    url: `/pages/share/detail?id=${item.id}`,
-  })
+// swiper 滑动过程中触发
+const swiperTransition = (e) => {
+  // 可以在这里处理滑动过程中的逻辑
+}
+
+// swiper 滑动结束后触发
+const swiperAnimationfinish = (e) => {
+  const current = e.detail.current
+  tab.value = current // swiper索引从0开始，tab从1开始
+}
+
+// 返回上一页
+const goBack = () => {
+  uni.navigateBack()
+}
+
+// 搜索功能（可以根据需要实现）
+const handleSearch = () => {
+  if (searchKeyword.value.trim()) {
+    // 实现搜索逻辑
+    console.log('搜索关键词:', searchKeyword.value)
+  }
 }
 </script>
 
@@ -231,111 +138,16 @@ const toMomentDetail = (item) => {
 .swiper {
   height: 100%;
 }
+
+.swiper-item {
+  height: 100%;
+}
+
 .main_container {
   width: 100vw;
   height: 100vh;
   box-sizing: border-box;
   background: #f6f8fa;
-
-  .content-box {
-    padding: 20rpx 30rpx;
-    box-sizing: border-box;
-    display: flex;
-    flex-direction: column;
-  }
-
-  // 瀑布流容器样式
-  .waterfall-container {
-    display: flex;
-    padding: 20rpx 30rpx;
-    box-sizing: border-box;
-    gap: 16rpx;
-  }
-
-  .waterfall-column {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-  }
-
-  .waterfall-item {
-    background: #fff;
-    border-radius: 16rpx;
-    margin-bottom: 20rpx;
-    overflow: hidden;
-    box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.1);
-  }
-
-  .waterfall-image {
-    width: 100%;
-
-    image {
-      width: 100%;
-      height: auto;
-      display: block;
-    }
-  }
-
-  .waterfall-content {
-    padding: 16rpx;
-  }
-
-  .waterfall-title {
-    font-size: 28rpx;
-    font-weight: 500;
-    color: #333;
-    line-height: 1.4;
-    margin-bottom: 12rpx;
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .waterfall-info {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-
-  .waterfall-author {
-    display: flex;
-    align-items: center;
-    flex: 1;
-    min-width: 0;
-  }
-
-  .author-avatar {
-    width: 32rpx;
-    height: 32rpx;
-    border-radius: 50%;
-    margin-right: 8rpx;
-  }
-
-  .author-name {
-    font-size: 24rpx;
-    color: #666;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .waterfall-likes {
-    display: flex;
-    align-items: center;
-    gap: 4rpx;
-  }
-
-  .like-icon {
-    width: 24rpx;
-    height: 24rpx;
-  }
-
-  .like-count {
-    font-size: 24rpx;
-    color: #666;
-  }
 
   .tab {
     display: flex;
@@ -345,12 +157,14 @@ const toMomentDetail = (item) => {
     font-size: 28rpx;
     color: #666666;
   }
+
   .tab-active {
     position: relative;
     font-weight: bold;
     font-size: 36rpx;
     color: #333;
   }
+
   .tab-active::after {
     content: '';
     position: absolute;
@@ -362,23 +176,15 @@ const toMomentDetail = (item) => {
   }
 }
 
-input {
-  width: 260rpx;
-  padding-left: 20rpx;
+.content-box {
+  margin-top: 20rpx;
+  padding: 0 30rpx;
   box-sizing: border-box;
-  font-weight: 400;
-  font-size: 28rpx;
-  color: #999999;
+  display: flex;
+  flex-direction: column;
 }
 
 :deep() {
-  .zp-l-container {
-    margin-bottom: 20rpx;
-  }
-
-  .wd-navbar.is-border::after {
-    display: none;
-  }
   .wd-input::after {
     display: none !important;
   }
