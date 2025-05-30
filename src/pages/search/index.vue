@@ -8,9 +8,9 @@
 
 <template>
   <view class="main_container">
-    <z-paging-swiper>
+    <z-paging ref="paging" v-model="dataList" @query="queryList" :fixed="false">
       <template #top>
-        <view class="w-full px-30rpx mt-20rpx box-border">
+        <view class="w-full px-30rpx pb-30rpx mt-20rpx box-border">
           <view class="flex h-72rpx items-center bg-white rounded-10rpx">
             <view class="w-72rpx flex items-center justify-center">
               <wd-icon color="#666" name="search" size="24rpx"></wd-icon>
@@ -44,36 +44,42 @@
           </view>
         </view>
       </template>
-
-      <swiper
-        class="swiper"
-        :current="tab"
-        @transition="swiperTransition"
-        @animationfinish="swiperAnimationfinish"
-        duration="150"
-      >
-        <swiper-item class="swiper-item" :key="index">
-          <!-- 这里的swiper-list-item为demo中为演示用定义的组件，列表及分页代码在swiper-list-item组件内 -->
-          <!-- 请注意，swiper-list-item非z-paging内置组件，在自己的项目中必须自己创建，若未创建则会报组件不存在的错误 -->
-          <listItem :tabIndex="0" :currentIndex="tab"></listItem>
-        </swiper-item>
-        <swiper-item class="swiper-item" :key="index">
-          <!-- 这里的swiper-list-item为demo中为演示用定义的组件，列表及分页代码在swiper-list-item组件内 -->
-          <!-- 请注意，swiper-list-item非z-paging内置组件，在自己的项目中必须自己创建，若未创建则会报组件不存在的错误 -->
-          <listItem :tabIndex="1" :currentIndex="tab"></listItem>
-        </swiper-item>
-      </swiper>
-    </z-paging-swiper>
+      <view class="h-full" v-if="tab === 0">
+        <view v-for="item in dataList" :key="item.id">
+          <activeItem :item="item" />
+        </view>
+      </view>
+      <view class="h-full" v-if="tab === 1">
+        <view v-for="item in dataList" :key="item.id">
+          <activeItem :item="item" />
+        </view>
+      </view>
+    </z-paging>
   </view>
 </template>
 
 <script lang="js" setup>
-import listItem from '@/components/list-item/index.vue'
 import activeItem from '@/components/active-item/index.vue'
 import { onShow } from '@dcloudio/uni-app'
 import { ref } from 'vue'
 import { getIsTabbar } from '@/utils'
 import { httpGet, httpPost } from '@/utils/http'
+
+// 请求活动列表
+const { run: runGetActivityList } = useRequest((e) =>
+  httpGet('/api/team/all', {
+    page: e.pageNo,
+    page_size: e.pageSize,
+  }),
+)
+
+// 请求精彩瞬间列表
+const { run: runGetMomentsList } = useRequest((e) =>
+  httpGet('/api/album/list', {
+    page: e.pageNo,
+    page_size: e.pageSize,
+  }),
+)
 
 const paging = ref(null)
 const dataList = ref([])
@@ -94,6 +100,8 @@ onShow(async () => {
 
 const changeTab = (value) => {
   tab.value = value
+  // 当切换tab或搜索时请调用组件的reload方法，请勿直接调用：queryList方法！！
+  paging.value.reload()
 }
 
 // 请求活动列表
@@ -103,21 +111,13 @@ const queryList = async (pageNo, pageSize) => {
     pageNo,
     pageSize,
   }
-
-  const { list } = await runGetList(queryParams)
-  console.log(list)
-  paging.value.complete(list)
-}
-
-// swiper 滑动过程中触发
-const swiperTransition = (e) => {
-  // 可以在这里处理滑动过程中的逻辑
-}
-
-// swiper 滑动结束后触发
-const swiperAnimationfinish = (e) => {
-  const current = e.detail.current
-  tab.value = current // swiper索引从0开始，tab从1开始
+  if (tab.value === 0) {
+    const { list } = await runGetActivityList(queryParams)
+    paging.value.complete(list)
+  } else {
+    const { data_list: list } = await runGetMomentsList(queryParams)
+    paging.value.complete(list)
+  }
 }
 
 // 返回上一页
