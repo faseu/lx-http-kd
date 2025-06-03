@@ -34,20 +34,31 @@
       <view
         class="flex items-center w-full h-60rpx px-4rpx box-border bg-[#F6F6F6] rounded-[10rpx]"
       >
-        <view class="flex pos-relative w-80rpx mr-12rpx">
-          <view class="flex justify-center items-center w-40rpx h-40rpx bg-white rounded-[50%]">
-            <image class="w-36rpx h-36rpx rounded-[50%]" src="https://temp.im/40x40" />
-          </view>
-          <view
-            class="flex justify-center items-center w-40rpx h-40rpx bg-white rounded-[50%] pos-absolute top-0 left-20rpx"
-          >
-            <image class="w-36rpx h-36rpx rounded-[50%]" src="https://temp.im/40x40" />
-          </view>
-          <view
-            class="flex justify-center items-center w-40rpx h-40rpx bg-white rounded-[50%] pos-absolute top-0 left-40rpx"
-          >
-            <image class="w-36rpx h-36rpx rounded-[50%]" src="https://temp.im/40x40" />
-          </view>
+        <view class="flex pos-relative w-80rpx h-40rpx mr-12rpx">
+          <!--          <view class="flex justify-center items-center w-40rpx h-40rpx bg-white rounded-[50%]">-->
+          <!--            <image class="w-36rpx h-36rpx rounded-[50%]" src="https://temp.im/40x40" />-->
+          <!--          </view>-->
+          <!--          <view-->
+          <!--            class="flex justify-center items-center w-40rpx h-40rpx bg-white rounded-[50%] pos-absolute top-0 left-20rpx"-->
+          <!--          >-->
+          <!--            <image class="w-36rpx h-36rpx rounded-[50%]" src="https://temp.im/40x40" />-->
+          <!--          </view>-->
+          <!--          <view-->
+          <!--            class="flex justify-center items-center w-40rpx h-40rpx bg-white rounded-[50%] pos-absolute top-0 left-40rpx"-->
+          <!--          >-->
+          <!--            <image class="w-36rpx h-36rpx rounded-[50%]" src="https://temp.im/40x40" />-->
+          <!--          </view>-->
+          <block v-for="(member, index) in item.members_info?.slice(0, 3)" :key="index">
+            <view
+              class="flex justify-center items-center w-40rpx h-40rpx bg-white rounded-[50%] pos-absolute top-0"
+              :style="{ left: `${index * 20}rpx`, zIndex: 10 - index }"
+            >
+              <image
+                class="w-36rpx h-36rpx rounded-[50%]"
+                :src="member.user_info?.avatar || 'https://temp.im/40x40'"
+              />
+            </view>
+          </block>
         </view>
         <view>已有{{ item.members?.length || 0 }}人上车～</view>
       </view>

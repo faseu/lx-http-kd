@@ -2,102 +2,49 @@
   <view
     class="w-100vw h-488rpx bg-[#DFF2F6] pos-relative left-[-20rpx] p-[38rpx_20rpx_22rpx] box-border flex flex-col justify-between text-24rpx color-[#333]"
   >
-    <view class="flex justify-between">
-      <!-- 全面保障 -->
+    <view class="flex justify-between" v-if="insuranceList.length > 0">
+      <!-- 动态渲染保险选项 -->
       <view
-        class="item item-1"
-        :class="{ 'item-active': selectedInsurance.type === 'comprehensive' }"
-        @click="selectInsurance('comprehensive')"
+        v-for="(insurance, index) in displayInsuranceList"
+        :key="insurance.id"
+        class="item"
+        :class="[`item-${index + 1}`, { 'item-active': selectedInsurance.id === insurance.id }]"
+        @click="selectInsurance(insurance)"
       >
         <view class="title">
-          <text>全面保障</text>
+          <text>{{ insurance.name }}</text>
         </view>
         <view
-          class="w-200rpx h-214rpx border border-solid border-[#DDECFF] rounded-20rpx p-[24rpx_20rpx] box-border bg-[#F2F8FA] flex flex-col justify-between"
+          class="w-200rpx h-214rpx border border-solid rounded-20rpx p-[24rpx_20rpx] box-border flex flex-col justify-between"
+          :class="getInsuranceCardClass(index)"
         >
           <view>
-            <view class="font-bold">{{ insuranceOptions.comprehensive.coverage }}万保额</view>
+            <view class="font-bold">{{ formatCoverage(insurance.hurt_coverage) }}万保额</view>
             <view class="text-20rpx color-[#586B93] mt-4rpx">
-              {{ insuranceOptions.comprehensive.description }}
+              {{ insurance.description || '意外保障' }}
             </view>
           </view>
           <view>
             <view class="w-150rpx pos-relative ml-[-5rpx]">
               <text class="color-[#FF8C28]">￥</text>
-              <text class="color-[#FF8C28] text-32rpx">{{ insuranceOptions.premium.price }}</text>
+              <text class="color-[#FF8C28] text-32rpx">{{ insurance.price }}</text>
               <text class="">/人</text>
             </view>
-            <view class="text-20rpx color-[#586B93] mt-4rpx">
-              原价¥{{ insuranceOptions.comprehensive.originalPrice }} / 人
+            <view
+              class="text-20rpx color-[#586B93] mt-4rpx"
+              v-if="insurance.original_price && insurance.original_price !== insurance.price"
+            >
+              原价¥{{ insurance.original_price }} / 人
             </view>
           </view>
         </view>
         <view class="triangle"></view>
       </view>
+    </view>
 
-      <!-- 标准保障 -->
-      <view
-        class="item item-2"
-        :class="{ 'item-active': selectedInsurance.type === 'standard' }"
-        @click="selectInsurance('standard')"
-      >
-        <view class="title">
-          <text>标准保障</text>
-        </view>
-        <view
-          class="w-200rpx h-214rpx border border-solid border-[#BCFFD7] rounded-20rpx p-[24rpx_20rpx] box-border bg-[#F2FAF3] flex flex-col justify-between"
-        >
-          <view>
-            <view class="font-bold">{{ insuranceOptions.standard.coverage }}万保额</view>
-            <view class="text-20rpx color-[#586B93] mt-4rpx">
-              {{ insuranceOptions.standard.description }}
-            </view>
-          </view>
-          <view>
-            <view class="w-150rpx pos-relative ml-[-5rpx]">
-              <text class="color-[#FF8C28]">￥</text>
-              <text class="color-[#FF8C28] text-32rpx">{{ insuranceOptions.premium.price }}</text>
-              <text class="">/人</text>
-            </view>
-            <view class="text-20rpx color-[#586B93] mt-4rpx">
-              原价¥{{ insuranceOptions.standard.originalPrice }} / 人
-            </view>
-          </view>
-        </view>
-        <view class="triangle"></view>
-      </view>
-
-      <!-- 尊享保障 -->
-      <view
-        class="item item-3"
-        :class="{ 'item-active': selectedInsurance.type === 'premium' }"
-        @click="selectInsurance('premium')"
-      >
-        <view class="title">
-          <text>尊享保障</text>
-        </view>
-        <view
-          class="w-200rpx h-214rpx border border-solid border-[#FFDED1] rounded-20rpx p-[24rpx_20rpx] box-border bg-[#FAF3F2] flex flex-col justify-between"
-        >
-          <view>
-            <view class="font-bold">{{ insuranceOptions.premium.coverage }}万保额</view>
-            <view class="text-20rpx color-[#586B93] mt-4rpx">
-              {{ insuranceOptions.premium.description }}
-            </view>
-          </view>
-          <view>
-            <view class="w-150rpx pos-relative ml-[-5rpx]">
-              <text class="color-[#FF8C28]">￥</text>
-              <text class="color-[#FF8C28] text-32rpx">{{ insuranceOptions.premium.price }}</text>
-              <text class="">/人</text>
-            </view>
-            <view class="text-20rpx color-[#586B93] mt-4rpx">
-              原价¥{{ insuranceOptions.premium.originalPrice }} / 人
-            </view>
-          </view>
-        </view>
-        <view class="triangle"></view>
-      </view>
+    <!-- 加载状态 -->
+    <view v-else class="flex justify-center items-center h-300rpx">
+      <text class="color-[#666]">加载保险选项中...</text>
     </view>
 
     <view
@@ -110,72 +57,70 @@
 </template>
 
 <script setup>
-import { ref, reactive, watch } from 'vue'
+import { ref, reactive, watch, computed } from 'vue'
 
 // 定义组件的 props 和 emits
 const props = defineProps({
-  // 默认选中的保险类型
-  defaultType: {
-    type: String,
-    default: 'comprehensive',
+  // 保险列表数据
+  insuranceList: {
+    type: Array,
+    default: () => [],
+  },
+  // 默认选中的保险ID
+  defaultId: {
+    type: Number,
+    default: null,
   },
 })
 
 const emit = defineEmits(['insuranceChange'])
 
-// 保险选项数据
-const insuranceOptions = reactive({
-  comprehensive: {
-    type: 'comprehensive',
-    name: '全面保障',
-    coverage: 50,
-    description: '参与者意外保障',
-    price: 12.98,
-    originalPrice: 25.96,
-    features: ['意外伤害保障', '意外医疗保障', '紧急救援服务', '24小时客服'],
-  },
-  standard: {
-    type: 'standard',
-    name: '标准保障',
-    coverage: 30,
-    description: '参与者意外保障',
-    price: 8.98,
-    originalPrice: 17.96,
-    features: ['意外伤害保障', '意外医疗保障', '紧急救援服务'],
-  },
-  premium: {
-    type: 'premium',
-    name: '尊享保障',
-    coverage: 100,
-    description: '参与者意外保障',
-    price: 19.98,
-    originalPrice: 39.96,
-    features: [
-      '意外伤害保障',
-      '意外医疗保障',
-      '紧急救援服务',
-      '24小时客服',
-      '住院津贴',
-      '交通意外双倍赔付',
-    ],
-  },
+// 当前选中的保险
+const selectedInsurance = ref({})
+
+// 计算显示的保险列表（最多显示3个）
+const displayInsuranceList = computed(() => {
+  return props.insuranceList.slice(0, 3)
 })
 
-// 当前选中的保险
-const selectedInsurance = ref(insuranceOptions[props.defaultType])
+// 格式化保额显示
+const formatCoverage = (coverage) => {
+  const amount = parseFloat(coverage)
+  if (amount >= 10000) {
+    return (amount / 10000).toFixed(0)
+  }
+  return (amount / 10000).toFixed(1)
+}
+
+// 获取保险卡片样式类
+const getInsuranceCardClass = (index) => {
+  const classes = [
+    'border-[#DDECFF] bg-[#F2F8FA]', // 第一个
+    'border-[#BCFFD7] bg-[#F2FAF3]', // 第二个
+    'border-[#FFDED1] bg-[#FAF3F2]', // 第三个
+  ]
+  return classes[index % 3]
+}
 
 // 选择保险
-const selectInsurance = (type) => {
-  selectedInsurance.value = insuranceOptions[type]
+const selectInsurance = (insurance) => {
+  selectedInsurance.value = insurance
 
   // 触发事件，向父组件传递选中的保险信息
-  emit('insuranceChange', {
-    type: selectedInsurance.value.type,
-    name: selectedInsurance.value.name,
-    price: selectedInsurance.value.price,
-    coverage: selectedInsurance.value.coverage,
-    features: selectedInsurance.value.features,
-  })
+  const insuranceData = {
+    id: insurance.id,
+    type: insurance.id.toString(),
+    name: insurance.name,
+    price: parseFloat(insurance.price),
+    coverage: formatCoverage(insurance.hurt_coverage),
+    features: insurance.description ? [insurance.description] : [],
+    description: insurance.description,
+    originalPrice: parseFloat(insurance.original_price || insurance.price),
+    medicalCoverage: parseFloat(insurance.medical_coverage),
+    allowancePrice: parseFloat(insurance.allowance_price),
+  }
+
+  emit('insuranceChange', insuranceData)
 }
 
 // 查看保险详情
@@ -183,17 +128,23 @@ const goToInsuranceDetail = () => {
   uni.navigateTo({ url: `/pages/insuranceDetail/index` })
 }
 
-// 监听选中保险变化，初始化时也要触发一次
+// 监听保险列表变化，自动选中第一个或指定的保险
 watch(
-  () => selectedInsurance.value,
-  () => {
-    emit('insuranceChange', {
-      type: selectedInsurance.value.type,
-      name: selectedInsurance.value.name,
-      price: selectedInsurance.value.price,
-      coverage: selectedInsurance.value.coverage,
-      features: selectedInsurance.value.features,
-    })
+  () => props.insuranceList,
+  (newList) => {
+    if (newList && newList.length > 0) {
+      let targetInsurance = newList[0] // 默认选择第一个
+
+      // 如果指定了默认ID，尝试找到对应的保险
+      if (props.defaultId) {
+        const foundInsurance = newList.find((item) => item.id === props.defaultId)
+        if (foundInsurance) {
+          targetInsurance = foundInsurance
+        }
+      }
+
+      selectInsurance(targetInsurance)
+    }
   },
   { immediate: true },
 )

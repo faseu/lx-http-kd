@@ -46,7 +46,7 @@
       </wd-cell-group>
 
       <!-- 保险选择组件 -->
-      <insurance @insuranceChange="handleInsuranceChange" />
+      <insurance :insurance-list="insuranceList" @insuranceChange="handleInsuranceChange" />
 
       <!-- 显示当前选中的保险信息 -->
       <view class="insurance-info">
@@ -82,8 +82,8 @@
           type="number"
           label-width="100px"
           :maxlength="11"
-          prop="passenger"
-          v-model="model.passenger"
+          prop="car_seat_count"
+          v-model="model.car_seat_count"
           placeholder="请输入可载人数"
         />
         <wd-input
@@ -172,8 +172,8 @@
 </template>
 
 <script lang="js" setup>
-import { reactive, ref, computed } from 'vue'
-import { httpPost } from '@/utils/http'
+import { reactive, ref, computed, onMounted } from 'vue'
+import { httpPost, httpGet } from '@/utils/http'
 import { useUserStore } from '@/store'
 import { onLoad } from '@dcloudio/uni-app'
 import { useToast, useMessage } from 'wot-design-uni'
@@ -191,10 +191,13 @@ const {
 const form = ref()
 const visible = ref(false)
 const id = ref()
+const openid = ref(null)
 const leaderId = ref()
 const basePrice = ref(0) // 队伍基础费用
+const insuranceList = ref([]) // 保险列表
+const loading = ref(false)
 
-// 选中的保险信息
+// 选中的保险信息（默认值）
 const selectedInsurance = ref({
   type: 'comprehensive',
   name: '全面保障',
@@ -212,9 +215,6 @@ const model = reactive({
   fileList1: [],
   fileList2: [],
   read: false,
-  // 保险相关字段
-  insurance_type: 'comprehensive',
-  insurance_price: 12.98,
 })
 
 // 计算总价格（基础费用 + 保险费用）
@@ -238,18 +238,62 @@ const getRules = () => ({
 const handleInsuranceChange = (insuranceData) => {
   console.log('选中保险:', insuranceData)
   selectedInsurance.value = insuranceData
-
-  // 更新模型中的保险相关字段
-  model.insurance_type = insuranceData.type
-  model.insurance_price = insuranceData.price
-
   toast.show(`已选择${insuranceData.name}，保费￥${insuranceData.price}/人`)
 }
 
-const { run: joinTeam } = useRequest((e) => httpPost('/api/activity/team/join', e))
-const { run: updateLeader } = useRequest((e) => httpPost('/api/activity/team/update_user', e))
+// 简化的请求函数
+const useRequest = (requestFn) => {
+  return {
+    run: async (params) => {
+      try {
+        loading.value = true
+        const result = await requestFn(params)
+        return result
+      } catch (error) {
+        console.error('请求失败:', error)
+        throw error
+      } finally {
+        loading.value = false
+      }
+    },
+  }
+}
 
-onLoad((options) => {
+const { run: joinTeam } = useRequest((e) => httpPost('/api/pay', e))
+const { run: updateLeader } = useRequest((e) => httpPost('/api/activity/team/update_user', e))
+const { run: getInsuranceList } = useRequest((e) => httpGet('/api/insurance_list', e))
+const { run: getOpenid } = useRequest((e) => httpPost('/api/get_openid', e))
+
+// 获取保险列表
+const fetchInsuranceList = async () => {
+  try {
+    const result = await getInsuranceList()
+    insuranceList.value = result?.data?.list || []
+    console.log('获取到的保险列表:', insuranceList.value)
+
+    // 如果有保险数据，设置默认选中第一个
+    if (insuranceList.value.length > 0) {
+      const firstInsurance = insuranceList.value[0]
+      selectedInsurance.value = {
+        id: firstInsurance.id,
+        type: firstInsurance.id.toString(),
+        name: firstInsurance.name,
+        price: parseFloat(firstInsurance.price),
+        coverage: parseFloat(firstInsurance.hurt_coverage) / 10000, // 转换为万元
+        features: firstInsurance.description ? [firstInsurance.description] : [],
+        description: firstInsurance.description,
+        originalPrice: parseFloat(firstInsurance.original_price || firstInsurance.price),
+        medicalCoverage: parseFloat(firstInsurance.medical_coverage),
+        allowancePrice: parseFloat(firstInsurance.allowance_price),
+      }
+    }
+  } catch (error) {
+    console.error('获取保险列表失败:', error)
+    toast.show('获取保险信息失败')
+  }
+}
+
+onLoad(async (options) => {
   if (options.id) {
     id.value = options.id
   }
@@ -264,6 +308,14 @@ onLoad((options) => {
   if (options.price) {
     basePrice.value = options.price
   }
+  const { code } = await uni.login()
+  const {
+    data: { openid: tempOpenid },
+  } = await getOpenid({ code })
+  console.log(tempOpenid)
+  openid.value = tempOpenid
+  // 获取保险列表
+  await fetchInsuranceList()
 })
 
 const handleFileChange1 = ({ fileList }) => {
@@ -290,9 +342,9 @@ const handleSubmit = async () => {
     const submitData = {
       ...model,
       team_id: id.value,
-      total_price: totalPrice.value, // 总价格
-      base_price: basePrice.value, // 基础价格
-      insurance_features: selectedInsurance.value.features, // 保险特性
+      openid: openid.value,
+      insurance_id: selectedInsurance.value.id, // 只需要保险ID
+      privacy_agreement: model.read, // 只需要保险ID
     }
 
     // 如果是车主，添加车辆照片
@@ -307,8 +359,22 @@ const handleSubmit = async () => {
         await updateLeader(submitData)
         toast.show('队长信息更新成功！')
       } else {
-        await joinTeam(submitData)
-        toast.show('已成功加入队伍！')
+        const { data: payData } = await joinTeam(submitData)
+        console.log(payData)
+        uni.requestPayment({
+          provider: 'wxpay',
+          timeStamp: payData.timeStamp,
+          nonceStr: payData.nonceStr,
+          package: payData.package,
+          signType: payData.signType,
+          paySign: payData.paySign,
+          success: (res) => {
+            uni.showToast({ title: '支付成功' })
+          },
+          fail: (err) => {
+            uni.showToast({ title: '支付失败', icon: 'none' })
+          },
+        })
       }
 
       setTimeout(() => {
@@ -365,10 +431,11 @@ const onDeleteCar = () => {
 }
 
 .footer {
-  padding: 0 32rpx;
+  padding: 24rpx 32rpx 0;
   box-sizing: border-box;
   width: 100%;
   position: fixed;
+  z-index: 99;
   bottom: 0;
   left: 0;
 }
