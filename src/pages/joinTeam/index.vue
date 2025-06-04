@@ -232,6 +232,12 @@ const getRules = () => ({
       message: '请填写车牌信息',
     },
   ],
+  car_seat_count: [
+    {
+      required: model.is_driver,
+      message: '请填写可载人数',
+    },
+  ],
 })
 
 // 处理保险选择变化
@@ -263,6 +269,7 @@ const { run: joinTeam } = useRequest((e) => httpPost('/api/pay', e))
 const { run: updateLeader } = useRequest((e) => httpPost('/api/activity/team/update_user', e))
 const { run: getInsuranceList } = useRequest((e) => httpGet('/api/insurance_list', e))
 const { run: getOpenid } = useRequest((e) => httpPost('/api/get_openid', e))
+const { run: cancelPay } = useRequest((e) => httpPost('/api/pay/cancel', e))
 
 // 获取保险列表
 const fetchInsuranceList = async () => {
@@ -369,9 +376,10 @@ const handleSubmit = async () => {
           signType: payData.signType,
           paySign: payData.paySign,
           success: (res) => {
-            uni.showToast({ title: '支付成功' })
+            uni.showToast({ title: '支付成功，加入小队' })
           },
           fail: (err) => {
+            cancelPay({ order_id: payData.order_id })
             uni.showToast({ title: '支付失败', icon: 'none' })
           },
         })

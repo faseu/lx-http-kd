@@ -8,10 +8,10 @@
         :key="item.id"
         @click="onItemClick(item)"
       >
-        <view class="waterfall-image">
+        <view class="waterfall-image" :style="{ height: getImageHeight(item) + 'rpx' }">
           <image
             :src="item.cover_image"
-            mode="widthFix"
+            mode="aspectFill"
             @load="onImageLoad($event, item, 'left')"
             @error="onImageError(item)"
           />
@@ -51,10 +51,10 @@
         :key="item.id"
         @click="onItemClick(item)"
       >
-        <view class="waterfall-image">
+        <view class="waterfall-image" :style="{ height: getImageHeight(item) + 'rpx' }">
           <image
             :src="item.cover_image"
-            mode="widthFix"
+            mode="aspectFill"
             @load="onImageLoad($event, item, 'right')"
             @error="onImageError(item)"
           />
@@ -107,6 +107,16 @@ const props = defineProps({
     type: Number,
     default: 20,
   },
+  // 默认占位高度
+  defaultImageHeight: {
+    type: Number,
+    default: 300,
+  },
+  // 图片最大高度
+  maxImageHeight: {
+    type: Number,
+    default: 500,
+  },
 })
 
 const emit = defineEmits(['itemClick', 'likeClick'])
@@ -119,34 +129,53 @@ const rightColumnData = ref([])
 const leftColumnHeight = ref(0)
 const rightColumnHeight = ref(0)
 
+// 获取图片显示高度
+const getImageHeight = (item) => {
+  if (item.imageHeight !== undefined) {
+    // 已加载完成，使用实际高度但不超过最大高度
+    return Math.min(item.imageHeight, props.maxImageHeight)
+  }
+  // 未加载完成，使用默认占位高度
+  return props.defaultImageHeight
+}
+
 // 图片加载完成的回调
 const onImageLoad = (event, item, column) => {
   const { height, width } = event.detail
 
   // 计算图片实际显示高度（基于容器宽度332rpx）
   const containerWidth = 332 // rpx
-  const imageHeight = (height * containerWidth) / width
+  let imageHeight = (height * containerWidth) / width
 
-  // 更新item的图片高度
-  item.imageHeight = imageHeight
+  // 限制最大高度
+  imageHeight = Math.min(imageHeight, props.maxImageHeight)
 
-  // 重新分配到合适的列
-  redistributeItem(item)
+  // 如果高度发生变化，才重新分配
+  if (item.imageHeight !== imageHeight) {
+    // 更新item的图片高度
+    item.imageHeight = imageHeight
+
+    // 重新分配到合适的列
+    redistributeItem(item)
+  }
 }
 
 // 图片加载错误的回调
 const onImageError = (item) => {
   // 设置默认图片高度
-  item.imageHeight = 400
-  item.cover_image = 'https://temp.im/332x400'
-  redistributeItem(item)
+  if (item.imageHeight !== props.defaultImageHeight) {
+    item.imageHeight = props.defaultImageHeight
+    item.cover_image = 'https://temp.im/332x' + props.defaultImageHeight
+    redistributeItem(item)
+  }
 }
 
 // 重新分配单个item到合适的列
 const redistributeItem = (item) => {
   // 计算item总高度（图片 + 内容区域）
   const contentHeight = 120 // 内容区域固定高度
-  const totalHeight = (item.imageHeight || 400) + contentHeight
+  const imageHeight = getImageHeight(item)
+  const totalHeight = imageHeight + contentHeight
 
   // 从当前列表中移除该item
   removeItemFromColumns(item.id)
@@ -166,14 +195,14 @@ const removeItemFromColumns = (itemId) => {
   const leftIndex = leftColumnData.value.findIndex((item) => item.id === itemId)
   if (leftIndex !== -1) {
     const removedItem = leftColumnData.value.splice(leftIndex, 1)[0]
-    const itemHeight = (removedItem.imageHeight || 400) + 120
+    const itemHeight = getImageHeight(removedItem) + 120
     leftColumnHeight.value -= itemHeight
   }
 
   const rightIndex = rightColumnData.value.findIndex((item) => item.id === itemId)
   if (rightIndex !== -1) {
     const removedItem = rightColumnData.value.splice(rightIndex, 1)[0]
-    const itemHeight = (removedItem.imageHeight || 400) + 120
+    const itemHeight = getImageHeight(removedItem) + 120
     rightColumnHeight.value -= itemHeight
   }
 }
@@ -189,7 +218,7 @@ const redistributeAllData = () => {
   // 逐个分配item
   props.dataList.forEach((item) => {
     const contentHeight = 120
-    const imageHeight = item.imageHeight || 400
+    const imageHeight = getImageHeight(item)
     const totalHeight = imageHeight + contentHeight
 
     // 选择高度较小的列
@@ -268,10 +297,11 @@ const onLikeClick = (item) => {
   width: 100%;
   position: relative;
   background: #f5f5f5;
+  overflow: hidden;
 
   image {
     width: 100%;
-    height: auto;
+    height: 100%;
     display: block;
   }
 }

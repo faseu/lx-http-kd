@@ -50,9 +50,7 @@
         </view>
       </view>
       <view class="h-full" v-if="tab === 1">
-        <view v-for="item in dataList" :key="item.id">
-          <activeItem :item="item" />
-        </view>
+        <WaterfallMoments :dataList="dataList" />
       </view>
     </z-paging>
   </view>
@@ -60,6 +58,7 @@
 
 <script lang="js" setup>
 import activeItem from '@/components/active-item/index.vue'
+import WaterfallMoments from '@/components/WaterfallMoments/index.vue'
 import { onShow } from '@dcloudio/uni-app'
 import { ref } from 'vue'
 import { getIsTabbar } from '@/utils'

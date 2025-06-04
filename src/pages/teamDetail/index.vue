@@ -130,7 +130,7 @@
             }}
           </view>
           <view class="text-20rpx color-[#999] mt-4rpx">
-            联系方式：{{ maskPhone(teamDetail?.creator_participant?.phone) }}（未报名不可见）
+            联系方式：{{ maskPhone(teamDetail?.phone) }}（未报名不可见）
           </view>
         </view>
         <view
