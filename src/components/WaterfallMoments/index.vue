@@ -1,90 +1,138 @@
 <template>
   <view class="waterfall-container">
-    <!-- 左列 -->
-    <view class="waterfall-column">
-      <view
-        class="waterfall-item"
-        v-for="item in leftColumnData"
-        :key="item.id"
-        @click="onItemClick(item)"
-      >
-        <view class="waterfall-image" :style="{ height: getImageHeight(item) + 'rpx' }">
-          <image
-            :src="item.cover_image"
-            mode="aspectFill"
-            @load="onImageLoad($event, item, 'left')"
-            @error="onImageError(item)"
-          />
-        </view>
-        <view class="waterfall-content">
-          <view class="waterfall-title">{{ item.title || item.description || '精彩瞬间' }}</view>
-          <view class="waterfall-info">
-            <view class="waterfall-author">
-              <image
-                class="author-avatar"
-                :src="item.uploader?.avatar || 'https://temp.im/64x64'"
-                mode="aspectFill"
-              />
-              <text class="author-name">{{ item.uploader?.nickname || '匿名用户' }}</text>
-            </view>
-            <view class="waterfall-likes" @click.stop="onLikeClick(item)">
-              <image
-                class="like-icon"
-                :src="
-                  item.is_liked
-                    ? '/static/images/homepage/like.png'
-                    : '/static/images/homepage/unlike.png'
-                "
-              />
-              <text class="like-count">{{ formatCount(item.likes_count || 0) }}</text>
-            </view>
+    <!-- 加载状态 -->
+    <view v-if="isCalculating && leftColumnData.length === 0" class="waterfall-loading">
+      <view class="loading-skeleton" v-for="n in 6" :key="n">
+        <view class="skeleton-image"></view>
+        <view class="skeleton-content">
+          <view class="skeleton-title"></view>
+          <view class="skeleton-info">
+            <view class="skeleton-avatar"></view>
+            <view class="skeleton-name"></view>
+            <view class="skeleton-like"></view>
           </view>
         </view>
       </view>
     </view>
 
-    <!-- 右列 -->
-    <view class="waterfall-column">
-      <view
-        class="waterfall-item"
-        v-for="item in rightColumnData"
-        :key="item.id"
-        @click="onItemClick(item)"
-      >
-        <view class="waterfall-image" :style="{ height: getImageHeight(item) + 'rpx' }">
-          <image
-            :src="item.cover_image"
-            mode="aspectFill"
-            @load="onImageLoad($event, item, 'right')"
-            @error="onImageError(item)"
-          />
-        </view>
-        <view class="waterfall-content">
-          <view class="waterfall-title">{{ item.title || item.description || '精彩瞬间' }}</view>
-          <view class="waterfall-info">
-            <view class="waterfall-author">
-              <image
-                class="author-avatar"
-                :src="item.uploader?.avatar || 'https://temp.im/64x64'"
-                mode="aspectFill"
-              />
-              <text class="author-name">{{ item.uploader?.nickname || '匿名用户' }}</text>
+    <!-- 瀑布流内容 -->
+    <template v-else>
+      <!-- 左列 -->
+      <view class="waterfall-column">
+        <view
+          class="waterfall-item"
+          v-for="item in leftColumnData"
+          :key="item.id"
+          @click="onItemClick(item)"
+          :class="{ 'item-new': item.isNew }"
+        >
+          <view class="waterfall-image" :style="{ height: item.displayHeight + 'rpx' }">
+            <image :src="item.cover_image" mode="aspectFill" />
+          </view>
+          <view class="waterfall-content">
+            <view class="waterfall-title">{{ item.title || item.description || '精彩瞬间' }}</view>
+            <view class="waterfall-info">
+              <view class="waterfall-author">
+                <image
+                  class="author-avatar"
+                  :src="item.uploader?.avatar || 'https://temp.im/64x64'"
+                  mode="aspectFill"
+                />
+                <text class="author-name">{{ item.uploader?.nickname || '匿名用户' }}</text>
+              </view>
+              <view class="waterfall-likes" @click.stop="onLikeClick(item)">
+                <image
+                  class="like-icon"
+                  :src="
+                    item.is_liked
+                      ? '/static/images/homepage/like.png'
+                      : '/static/images/homepage/unlike.png'
+                  "
+                />
+                <text class="like-count">{{ formatCount(item.likes_count || 0) }}</text>
+              </view>
             </view>
-            <view class="waterfall-likes" @click.stop="onLikeClick(item)">
-              <image
-                class="like-icon"
-                :src="
-                  item.is_liked
-                    ? '/static/images/homepage/like.png'
-                    : '/static/images/homepage/unlike.png'
-                "
-              />
-              <text class="like-count">{{ formatCount(item.likes_count || 0) }}</text>
+          </view>
+        </view>
+
+        <!-- 左列新增数据加载指示器 -->
+        <view v-if="isCalculating && leftNewItems.length > 0" class="loading-more">
+          <view
+            class="loading-skeleton"
+            v-for="n in Math.min(leftNewItems.length, 3)"
+            :key="'left-' + n"
+          >
+            <view class="skeleton-image"></view>
+            <view class="skeleton-content">
+              <view class="skeleton-title"></view>
+              <view class="skeleton-info">
+                <view class="skeleton-avatar"></view>
+                <view class="skeleton-name"></view>
+                <view class="skeleton-like"></view>
+              </view>
             </view>
           </view>
         </view>
       </view>
-    </view>
+
+      <!-- 右列 -->
+      <view class="waterfall-column">
+        <view
+          class="waterfall-item"
+          v-for="item in rightColumnData"
+          :key="item.id"
+          @click="onItemClick(item)"
+          :class="{ 'item-new': item.isNew }"
+        >
+          <view class="waterfall-image" :style="{ height: item.displayHeight + 'rpx' }">
+            <image :src="item.cover_image" mode="aspectFill" />
+          </view>
+          <view class="waterfall-content">
+            <view class="waterfall-title">{{ item.title || item.description || '精彩瞬间' }}</view>
+            <view class="waterfall-info">
+              <view class="waterfall-author">
+                <image
+                  class="author-avatar"
+                  :src="item.uploader?.avatar || 'https://temp.im/64x64'"
+                  mode="aspectFill"
+                />
+                <text class="author-name">{{ item.uploader?.nickname || '匿名用户' }}</text>
+              </view>
+              <view class="waterfall-likes" @click.stop="onLikeClick(item)">
+                <image
+                  class="like-icon"
+                  :src="
+                    item.is_liked
+                      ? '/static/images/homepage/like.png'
+                      : '/static/images/homepage/unlike.png'
+                  "
+                />
+                <text class="like-count">{{ formatCount(item.likes_count || 0) }}</text>
+              </view>
+            </view>
+          </view>
+        </view>
+
+        <!-- 右列新增数据加载指示器 -->
+        <view v-if="isCalculating && rightNewItems.length > 0" class="loading-more">
+          <view
+            class="loading-skeleton"
+            v-for="n in Math.min(rightNewItems.length, 3)"
+            :key="'right-' + n"
+          >
+            <view class="skeleton-image"></view>
+            <view class="skeleton-content">
+              <view class="skeleton-title"></view>
+              <view class="skeleton-info">
+                <view class="skeleton-avatar"></view>
+                <view class="skeleton-name"></view>
+                <view class="skeleton-like"></view>
+              </view>
+            </view>
+          </view>
+        </view>
+      </view>
+    </template>
   </view>
 </template>
 
@@ -125,122 +173,275 @@ const emit = defineEmits(['itemClick', 'likeClick'])
 const leftColumnData = ref([])
 const rightColumnData = ref([])
 
+// 新增数据临时存储
+const leftNewItems = ref([])
+const rightNewItems = ref([])
+
+// 计算状态
+const isCalculating = ref(false)
+
 // 列高度记录
 const leftColumnHeight = ref(0)
 const rightColumnHeight = ref(0)
 
-// 获取图片显示高度
-const getImageHeight = (item) => {
-  if (item.imageHeight !== undefined) {
-    // 已加载完成，使用实际高度但不超过最大高度
-    return Math.min(item.imageHeight, props.maxImageHeight)
-  }
-  // 未加载完成，使用默认占位高度
-  return props.defaultImageHeight
+// 已处理的数据ID集合
+const processedIds = ref(new Set())
+
+// 上一次的数据列表长度
+const previousDataLength = ref(0)
+
+// 预加载图片并获取尺寸
+const preloadImage = (src) => {
+  return new Promise((resolve) => {
+    // 在小程序环境中使用 getImageInfo
+    if (typeof uni !== 'undefined') {
+      uni.getImageInfo({
+        src,
+        success: (res) => {
+          resolve({
+            width: res.width,
+            height: res.height,
+            success: true,
+          })
+        },
+        fail: () => {
+          resolve({
+            width: 332,
+            height: props.defaultImageHeight,
+            success: false,
+          })
+        },
+      })
+    } else {
+      // H5 环境fallback
+      const img = new Image()
+      img.onload = () => {
+        resolve({
+          width: img.width || img.naturalWidth,
+          height: img.height || img.naturalHeight,
+          success: true,
+        })
+      }
+      img.onerror = () => {
+        resolve({
+          width: 332,
+          height: props.defaultImageHeight,
+          success: false,
+        })
+      }
+      img.src = src
+    }
+  })
 }
 
-// 图片加载完成的回调
-const onImageLoad = (event, item, column) => {
-  const { height, width } = event.detail
-
-  // 计算图片实际显示高度（基于容器宽度332rpx）
+// 计算图片显示高度
+const calculateImageHeight = (originalWidth, originalHeight) => {
   const containerWidth = 332 // rpx
-  let imageHeight = (height * containerWidth) / width
+  let imageHeight = (originalHeight * containerWidth) / originalWidth
 
   // 限制最大高度
   imageHeight = Math.min(imageHeight, props.maxImageHeight)
 
-  // 如果高度发生变化，才重新分配
-  if (item.imageHeight !== imageHeight) {
-    // 更新item的图片高度
-    item.imageHeight = imageHeight
+  // 确保最小高度
+  imageHeight = Math.max(imageHeight, 200)
 
-    // 重新分配到合适的列
-    redistributeItem(item)
-  }
+  return Math.round(imageHeight)
 }
 
-// 图片加载错误的回调
-const onImageError = (item) => {
-  // 设置默认图片高度
-  if (item.imageHeight !== props.defaultImageHeight) {
-    item.imageHeight = props.defaultImageHeight
-    item.cover_image = 'https://temp.im/332x' + props.defaultImageHeight
-    redistributeItem(item)
+// 预处理新增数据
+const preprocessNewData = async (newDataList) => {
+  if (!newDataList || newDataList.length === 0) {
+    return []
   }
+
+  const processedData = await Promise.all(
+    newDataList.map(async (item) => {
+      const imageInfo = await preloadImage(item.cover_image)
+
+      const displayHeight = imageInfo.success
+        ? calculateImageHeight(imageInfo.width, imageInfo.height)
+        : props.defaultImageHeight
+
+      return {
+        ...item,
+        displayHeight,
+        imageWidth: imageInfo.width,
+        imageHeight: imageInfo.height,
+        imageLoaded: imageInfo.success,
+        isNew: true, // 标记为新增数据
+      }
+    }),
+  )
+
+  return processedData
 }
 
-// 重新分配单个item到合适的列
-const redistributeItem = (item) => {
-  // 计算item总高度（图片 + 内容区域）
+// 分配新增数据到两列
+const distributeNewData = (newProcessedData) => {
   const contentHeight = 120 // 内容区域固定高度
-  const imageHeight = getImageHeight(item)
-  const totalHeight = imageHeight + contentHeight
 
-  // 从当前列表中移除该item
-  removeItemFromColumns(item.id)
+  // 清空新增数据临时存储
+  leftNewItems.value = []
+  rightNewItems.value = []
 
-  // 选择高度较小的列
-  if (leftColumnHeight.value <= rightColumnHeight.value) {
-    leftColumnData.value.push(item)
-    leftColumnHeight.value += totalHeight
-  } else {
-    rightColumnData.value.push(item)
-    rightColumnHeight.value += totalHeight
-  }
+  // 逐个分配新增item
+  newProcessedData.forEach((item) => {
+    const totalHeight = item.displayHeight + contentHeight + props.rowGap
+
+    // 选择高度较小的列
+    if (leftColumnHeight.value <= rightColumnHeight.value) {
+      leftNewItems.value.push(item)
+      leftColumnHeight.value += totalHeight
+    } else {
+      rightNewItems.value.push(item)
+      rightColumnHeight.value += totalHeight
+    }
+  })
+
+  // 将新增数据添加到对应列
+  nextTick(() => {
+    leftColumnData.value.push(...leftNewItems.value)
+    rightColumnData.value.push(...rightNewItems.value)
+
+    // 清除新增标记（延迟清除以保持动画效果）
+    setTimeout(() => {
+      leftColumnData.value.forEach((item) => (item.isNew = false))
+      rightColumnData.value.forEach((item) => (item.isNew = false))
+    }, 500)
+
+    isCalculating.value = false
+  })
 }
 
-// 从列中移除指定item
-const removeItemFromColumns = (itemId) => {
-  const leftIndex = leftColumnData.value.findIndex((item) => item.id === itemId)
-  if (leftIndex !== -1) {
-    const removedItem = leftColumnData.value.splice(leftIndex, 1)[0]
-    const itemHeight = getImageHeight(removedItem) + 120
-    leftColumnHeight.value -= itemHeight
-  }
-
-  const rightIndex = rightColumnData.value.findIndex((item) => item.id === itemId)
-  if (rightIndex !== -1) {
-    const removedItem = rightColumnData.value.splice(rightIndex, 1)[0]
-    const itemHeight = getImageHeight(removedItem) + 120
-    rightColumnHeight.value -= itemHeight
-  }
-}
-
-// 完全重新分配所有数据
-const redistributeAllData = () => {
-  // 清空列数据
+// 完全重新分配所有数据（仅在重置时使用）
+const redistributeAllData = async (dataList) => {
+  // 清空所有数据
   leftColumnData.value = []
   rightColumnData.value = []
   leftColumnHeight.value = 0
   rightColumnHeight.value = 0
+  processedIds.value.clear()
+  previousDataLength.value = 0
 
-  // 逐个分配item
-  props.dataList.forEach((item) => {
+  if (!dataList || dataList.length === 0) {
+    isCalculating.value = false
+    return
+  }
+
+  isCalculating.value = true
+
+  try {
+    const processedData = await Promise.all(
+      dataList.map(async (item) => {
+        const imageInfo = await preloadImage(item.cover_image)
+
+        const displayHeight = imageInfo.success
+          ? calculateImageHeight(imageInfo.width, imageInfo.height)
+          : props.defaultImageHeight
+
+        // 添加到已处理集合
+        processedIds.value.add(item.id)
+
+        return {
+          ...item,
+          displayHeight,
+          imageWidth: imageInfo.width,
+          imageHeight: imageInfo.height,
+          imageLoaded: imageInfo.success,
+          isNew: false,
+        }
+      }),
+    )
+
     const contentHeight = 120
-    const imageHeight = getImageHeight(item)
-    const totalHeight = imageHeight + contentHeight
 
-    // 选择高度较小的列
-    if (leftColumnHeight.value <= rightColumnHeight.value) {
-      leftColumnData.value.push(item)
-      leftColumnHeight.value += totalHeight
-    } else {
-      rightColumnData.value.push(item)
-      rightColumnHeight.value += totalHeight
-    }
+    // 分配到两列
+    processedData.forEach((item) => {
+      const totalHeight = item.displayHeight + contentHeight + props.rowGap
+
+      if (leftColumnHeight.value <= rightColumnHeight.value) {
+        leftColumnData.value.push(item)
+        leftColumnHeight.value += totalHeight
+      } else {
+        rightColumnData.value.push(item)
+        rightColumnHeight.value += totalHeight
+      }
+    })
+
+    previousDataLength.value = dataList.length
+    isCalculating.value = false
+  } catch (error) {
+    console.error('瀑布流数据处理失败:', error)
+    isCalculating.value = false
+  }
+}
+
+// 处理增量数据更新
+const handleIncrementalUpdate = async (newDataList) => {
+  // 找出新增的数据
+  const newItems = newDataList.filter((item) => !processedIds.value.has(item.id))
+
+  if (newItems.length === 0) {
+    return
+  }
+
+  isCalculating.value = true
+
+  try {
+    // 预处理新增数据
+    const processedNewData = await preprocessNewData(newItems)
+
+    // 添加到已处理集合
+    processedNewData.forEach((item) => {
+      processedIds.value.add(item.id)
+    })
+
+    // 分配新增数据
+    distributeNewData(processedNewData)
+
+    previousDataLength.value = newDataList.length
+  } catch (error) {
+    console.error('增量更新失败:', error)
+    isCalculating.value = false
+  }
+}
+
+// 处理数据变化
+const handleDataChange = async (newData, oldData) => {
+  // 如果新数据为空或长度为0，重置所有数据
+  if (!newData || newData.length === 0) {
+    await redistributeAllData([])
+    return
+  }
+
+  // 如果是第一次加载或者数据完全重置
+  if (!oldData || oldData.length === 0 || newData.length < previousDataLength.value) {
+    await redistributeAllData(newData)
+    return
+  }
+
+  // 如果数据长度增加，进行增量更新
+  if (newData.length > previousDataLength.value) {
+    await handleIncrementalUpdate(newData)
+    return
+  }
+
+  // 如果长度相同，检查是否有数据更新
+  const hasUpdates = newData.some((item, index) => {
+    const oldItem = oldData[index]
+    return !oldItem || oldItem.id !== item.id
   })
+
+  if (hasUpdates) {
+    await redistributeAllData(newData)
+  }
 }
 
 // 监听数据变化
 watch(
   () => props.dataList,
-  (newData) => {
-    if (newData && newData.length > 0) {
-      nextTick(() => {
-        redistributeAllData()
-      })
-    }
+  (newData, oldData) => {
+    handleDataChange(newData, oldData)
   },
   { deep: true, immediate: true },
 )
@@ -272,6 +473,105 @@ const onLikeClick = (item) => {
   gap: 16rpx;
   padding: 0 16rpx;
   box-sizing: border-box;
+  min-height: 400rpx;
+}
+
+.waterfall-loading {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
+  width: 100%;
+}
+
+.loading-more {
+  width: 100%;
+}
+
+.loading-skeleton {
+  width: calc(50% - 8rpx);
+  background: #fff;
+  border-radius: 16rpx;
+  overflow: hidden;
+  margin-bottom: 20rpx;
+  animation: pulse 1.5s ease-in-out infinite;
+
+  .loading-more & {
+    width: 100%;
+  }
+}
+
+.skeleton-image {
+  width: 100%;
+  height: 300rpx;
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+}
+
+.skeleton-content {
+  padding: 16rpx;
+}
+
+.skeleton-title {
+  height: 32rpx;
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+  border-radius: 4rpx;
+  margin-bottom: 12rpx;
+}
+
+.skeleton-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.skeleton-avatar {
+  width: 32rpx;
+  height: 32rpx;
+  border-radius: 50%;
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+}
+
+.skeleton-name {
+  width: 120rpx;
+  height: 24rpx;
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+  border-radius: 4rpx;
+  margin-left: 8rpx;
+}
+
+.skeleton-like {
+  width: 60rpx;
+  height: 24rpx;
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+  border-radius: 4rpx;
+}
+
+@keyframes loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
 }
 
 .waterfall-column {
@@ -286,10 +586,27 @@ const onLikeClick = (item) => {
   margin-bottom: 20rpx;
   overflow: hidden;
   box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.08);
-  transition: transform 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    opacity 0.3s ease;
+
+  &.item-new {
+    animation: slideInUp 0.5s ease-out;
+  }
 
   &:active {
     transform: scale(0.98);
+  }
+}
+
+@keyframes slideInUp {
+  0% {
+    opacity: 0;
+    transform: translateY(30rpx);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 

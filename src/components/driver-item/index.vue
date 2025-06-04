@@ -7,7 +7,7 @@
       />
       <image
         class="w-78rpx h-36rpx pos-absolute bottom-[-18rpx] right-32rpx"
-        src="https://temp.im/166x166"
+        src="/static/images/common/teamOwner.png"
       />
     </view>
     <view class="p-16rpx ml-10rpx flex-1 flex flex-col justify-between">

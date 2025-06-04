@@ -97,6 +97,14 @@
       }
     },
     {
+      "path": "pages/insurancePDF/index",
+      "type": "page",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": ""
+      }
+    },
+    {
       "path": "pages/joinTeam/index",
       "type": "page",
       "style": {

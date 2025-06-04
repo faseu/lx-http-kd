@@ -159,7 +159,7 @@
             <wd-icon name="arrow-right" color="#FF665A" size="32rpx"></wd-icon>
           </view>
         </view>
-        <view class="flex mt-16rpx justify-between w-full">
+        <view class="flex mt-16rpx w-full gap-56rpx">
           <image
             v-for="(member, index) in teamDetail?.members_info?.slice(0, 6)"
             :key="index"

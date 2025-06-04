@@ -46,7 +46,9 @@
       </wd-cell-group>
 
       <!-- 保险选择组件 -->
-      <insurance :insurance-list="insuranceList" @insuranceChange="handleInsuranceChange" />
+      <view class="mt-20rpx">
+        <insurance :insurance-list="insuranceList" @insuranceChange="handleInsuranceChange" />
+      </view>
 
       <!-- 显示当前选中的保险信息 -->
       <view class="insurance-info">
@@ -135,6 +137,26 @@
         </wd-upload>
       </view>
 
+      <wd-cell-group title="紧急联系人">
+        <wd-input
+          label="姓名"
+          label-width="100px"
+          :maxlength="20"
+          prop="emergency_contact"
+          v-model="model.emergency_contact"
+          placeholder="请输入紧急联系人姓名"
+        />
+        <wd-input
+          label="联系电话"
+          type="number"
+          label-width="100px"
+          :maxlength="11"
+          prop="emergency_contact_phone"
+          v-model="model.emergency_contact_phone"
+          placeholder="请输入紧急联系人电话"
+        />
+      </wd-cell-group>
+
       <view class="color-[#FF5252] text-24rpx mt-20rpx">
         注：加入队伍需预付费用，出发前72小时退出全额退款，出发前24 小时退出退款50%
       </view>
@@ -211,7 +233,10 @@ const model = reactive({
   id_card: '',
   phone: '',
   is_driver: true,
+  car_seat_count: '',
   license_plate: '',
+  emergency_contact: '',
+  emergency_contact_phone: '',
   fileList1: [],
   fileList2: [],
   read: false,
@@ -226,6 +251,8 @@ const getRules = () => ({
   name: [{ required: true, message: '请输入姓名' }],
   id_card: [{ required: true, message: '请输入身份证号' }],
   phone: [{ required: true, message: '请输入手机号' }],
+  emergency_contact: [{ required: true, message: '请输入紧急联系人姓名' }],
+  emergency_contact_phone: [{ required: true, message: '请输入紧急联系人电话' }],
   license_plate: [
     {
       required: model.is_driver,
@@ -244,7 +271,7 @@ const getRules = () => ({
 const handleInsuranceChange = (insuranceData) => {
   console.log('选中保险:', insuranceData)
   selectedInsurance.value = insuranceData
-  toast.show(`已选择${insuranceData.name}，保费￥${insuranceData.price}/人`)
+  // toast.show(`已选择${insuranceData.name}，保费￥${insuranceData.price}/人`)
 }
 
 // 简化的请求函数
@@ -270,6 +297,41 @@ const { run: updateLeader } = useRequest((e) => httpPost('/api/activity/team/upd
 const { run: getInsuranceList } = useRequest((e) => httpGet('/api/insurance_list', e))
 const { run: getOpenid } = useRequest((e) => httpPost('/api/get_openid', e))
 const { run: cancelPay } = useRequest((e) => httpPost('/api/pay/cancel', e))
+// 🆕 新增：获取用户信息的请求函数
+const { run: getUserInfo } = useRequest(() => httpGet('/api/get_user'))
+
+// 🆕 新增：获取并填充用户信息
+const fetchAndFillUserInfo = async () => {
+  try {
+    const result = await getUserInfo()
+    const userInfo = result?.data || result
+
+    if (userInfo) {
+      // 映射用户信息到表单字段
+      if (userInfo.real_name) {
+        model.name = userInfo.real_name
+      }
+      if (userInfo.id_card_number) {
+        model.id_card = userInfo.id_card_number
+      }
+      if (userInfo.phone_number) {
+        model.phone = userInfo.phone_number
+      }
+      if (userInfo.emergency_contact) {
+        model.emergency_contact = userInfo.emergency_contact
+      }
+      if (userInfo.emergency_contact_phone) {
+        model.emergency_contact_phone = userInfo.emergency_contact_phone
+      }
+
+      console.log('已自动填充用户信息:', userInfo)
+      // toast.show('已自动填充个人信息')
+    }
+  } catch (error) {
+    console.error('获取用户信息失败:', error)
+    // 静默处理，不影响用户体验
+  }
+}
 
 // 获取保险列表
 const fetchInsuranceList = async () => {
@@ -315,14 +377,25 @@ onLoad(async (options) => {
   if (options.price) {
     basePrice.value = options.price
   }
-  const { code } = await uni.login()
-  const {
-    data: { openid: tempOpenid },
-  } = await getOpenid({ code })
-  console.log(tempOpenid)
-  openid.value = tempOpenid
-  // 获取保险列表
-  await fetchInsuranceList()
+
+  // 🆕 修改：并行执行获取用户信息和其他初始化操作
+  try {
+    const { code } = await uni.login()
+    const {
+      data: { openid: tempOpenid },
+    } = await getOpenid({ code })
+    console.log(tempOpenid)
+    openid.value = tempOpenid
+
+    // 并行执行获取保险列表和用户信息
+    await Promise.all([
+      fetchInsuranceList(),
+      fetchAndFillUserInfo(), // 🆕 新增：获取并填充用户信息
+    ])
+  } catch (error) {
+    console.error('初始化失败:', error)
+    toast.show('初始化失败，请重试')
+  }
 })
 
 const handleFileChange1 = ({ fileList }) => {

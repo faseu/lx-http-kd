@@ -10,6 +10,7 @@ interface NavigateToOptions {
        "/pages/homePage/goHiking" |
        "/pages/homePage/index" |
        "/pages/insuranceDetail/index" |
+       "/pages/insurancePDF/index" |
        "/pages/joinTeam/index" |
        "/pages/login/index" |
        "/pages/message/index" |
