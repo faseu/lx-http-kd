@@ -87,7 +87,12 @@
         <template #value>
           <div class="w-full flex items-center justify-between">
             <text class="color-[#999] text-24rpx">（车费过路费等车主不A，其余队员AA）</text>
-            <wd-switch v-model="model.is_driver" size="24px" />
+            <wd-switch
+              v-model="model.is_driver"
+              size="24px"
+              @change="handleDriverSwitchChange"
+              :disabled="model.is_driver && selectedDriverId"
+            />
           </div>
         </template>
         <wd-input
@@ -356,6 +361,47 @@ const getRules = () => ({
   ],
 })
 
+// 处理司机开关变化
+const handleDriverSwitchChange = ({ value: newValue }) => {
+  console.log('司机开关变化:', newValue, '当前选中司机ID:', selectedDriverId.value)
+
+  // 如果要开启司机模式，且当前已选择了其他司机的车辆
+  if (newValue && selectedDriverId.value) {
+    // 阻止开关变化，先弹出确认框
+    model.is_driver = false
+
+    message
+      .confirm({
+        msg: '当车主后将退出当前选择的车辆，确定要切换为车主吗？',
+        title: '确认切换',
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+      })
+      .then(() => {
+        // 用户确认，退出当前车辆并开启司机模式
+        selectedDriverId.value = null
+        model.driver_id = null
+        model.is_driver = true
+        toast.show('已退出当前车辆，切换为车主模式')
+      })
+      .catch(() => {
+        // 用户取消，保持开关关闭状态
+        console.log('用户取消切换为车主')
+      })
+  } else if (!newValue) {
+    // 关闭司机模式，直接允许
+    model.is_driver = false
+    // 清空司机相关信息
+    model.car_seat_count = ''
+    model.license_plate = ''
+    model.fileList1 = []
+    model.fileList2 = []
+  } else {
+    // 开启司机模式且没有选择其他车辆，直接允许
+    model.is_driver = true
+  }
+}
+
 // 处理保险选择变化
 const handleInsuranceChange = (insuranceData) => {
   console.log('选中保险:', insuranceData)
@@ -365,9 +411,38 @@ const handleInsuranceChange = (insuranceData) => {
 // 处理选择司机车辆
 const handleSelectDriver = (driverData) => {
   console.log('选择司机车辆:', driverData)
-  selectedDriverId.value = driverData.id
-  model.driver_id = driverData.id
-  toast.show(`已选择${driverData.name}的车辆`)
+
+  // 如果当前是司机模式，先询问是否退出司机模式
+  if (model.is_driver) {
+    message
+      .confirm({
+        msg: '选择其他车辆后将退出车主模式，确定要选择该车辆吗？',
+        title: '确认选择',
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+      })
+      .then(() => {
+        // 退出司机模式
+        model.is_driver = false
+        model.car_seat_count = ''
+        model.license_plate = ''
+        model.fileList1 = []
+        model.fileList2 = []
+
+        // 选择新车辆
+        selectedDriverId.value = driverData.id
+        model.driver_id = driverData.id
+        toast.show(`已退出车主模式，选择${driverData.name}的车辆`)
+      })
+      .catch(() => {
+        console.log('用户取消选择车辆')
+      })
+  } else {
+    // 非司机模式，直接选择车辆
+    selectedDriverId.value = driverData.id
+    model.driver_id = driverData.id
+    toast.show(`已选择${driverData.name}的车辆`)
+  }
 }
 
 // 处理退出车辆
