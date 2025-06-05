@@ -753,8 +753,8 @@ const handleExitCar = async (driverData) => {
       .then(async () => {
         uni.showLoading({ title: '处理中...' })
 
-        await httpPost('/api/team/exit_car', {
-          driver_id: driverData.id,
+        await httpPost('/api/team/update_user', {
+          driver_id: null,
           team_id: teamDetail.value?.id,
         })
 
