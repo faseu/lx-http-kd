@@ -69,20 +69,17 @@
       <!-- 车主信息展示 -->
       <view v-if="teamDrivers.length > 0" class="mt-20rpx">
         <wd-cell-group title="当前车主信息">
-          <template #value>
-            <text class="color-[#999] text-24rpx">可选择搭乘以下车主的车辆</text>
-          </template>
+          <view class="drivers-container">
+            <driverItem
+              v-for="driver in teamDrivers"
+              :key="driver.id"
+              :item="driver"
+              :bg="'#f6f8fa'"
+              :showReviewStatus="false"
+              @join-car="handleSelectDriver"
+            />
+          </view>
         </wd-cell-group>
-        <view class="drivers-container">
-          <driverItem
-            v-for="driver in teamDrivers"
-            :key="driver.id"
-            :item="driver"
-            :bg="'#f6f8fa'"
-            :showReviewStatus="false"
-            @join-car="handleSelectDriver"
-          />
-        </view>
       </view>
 
       <wd-cell-group title="当车主">
@@ -266,7 +263,7 @@ const teamDrivers = computed(() => {
   const currentUserId = localLeaderId
 
   return teamDetail.value.members_info
-    .filter((member) => member.is_driver && member.driver_review_status === 1) // 只显示审核通过的司机
+    .filter((member) => member.is_driver && +member.driver_review_status === 1) // 只显示审核通过的司机
     .map((driver) => {
       const isCurrentUserCar = driver.user_info?.id === currentUserId
       const isCurrentUserPassenger = driver.car_passengers?.some(
@@ -282,7 +279,7 @@ const teamDrivers = computed(() => {
         pickup_location: driver.pickup_location || '待确定上车点',
         car_seat_count: driver.car_seat_count || 4,
         car_passengers: driver.car_passengers || [],
-        driver_review_status: driver.driver_review_status || '1',
+        driver_review_status: driver.driver_review_status || 1,
         is_current_user_car: isCurrentUserCar,
         is_current_user_passenger: isCurrentUserPassenger,
         // 保留原始数据
@@ -330,37 +327,16 @@ const handleSelectDriver = (driverData) => {
   toast.show(`已选择${driverData.name}的车辆`)
 }
 
-// 简化的请求函数
-const useRequest = (requestFn) => {
-  return {
-    run: async (params) => {
-      try {
-        loading.value = true
-        const result = await requestFn(params)
-        return result
-      } catch (error) {
-        console.error('请求失败:', error)
-        throw error
-      } finally {
-        loading.value = false
-      }
-    },
-  }
-}
-
 const { run: joinTeam } = useRequest((e) => httpPost('/api/pay', e))
 const { run: updateLeader } = useRequest((e) => httpPost('/api/activity/team/update_user', e))
 const { run: getInsuranceList } = useRequest((e) => httpGet('/api/insurance_list', e))
 const { run: getOpenid } = useRequest((e) => httpPost('/api/get_openid', e))
-const { run: cancelPay } = useRequest((e) => httpPost('/api/pay/cancel', e))
 const { run: getUserInfo } = useRequest(() => httpGet('/api/get_user'))
-const { run: getTeamDetail } = useRequest((e) => httpGet(`/api/team/user/detail/${e.id}`)) // 新增：获取队伍详情
-
+const { run: getTeamDetail } = useRequest((e) => httpGet(`/api/team/user/detail/${e.id}`))
 // 获取并填充用户信息
 const fetchAndFillUserInfo = async () => {
   try {
-    const result = await getUserInfo()
-    const userInfo = result?.data || result
+    const userInfo = await getUserInfo()
 
     if (userInfo) {
       // 映射用户信息到表单字段
@@ -391,7 +367,6 @@ const fetchAndFillUserInfo = async () => {
 const fetchTeamDetail = async (teamId) => {
   try {
     const data = await getTeamDetail({ id: teamId })
-    console.log(data)
     teamDetail.value = data.team_detail
     console.log('获取到的队伍详情:', teamDetail.value)
   } catch (error) {
@@ -402,8 +377,8 @@ const fetchTeamDetail = async (teamId) => {
 // 获取保险列表
 const fetchInsuranceList = async () => {
   try {
-    const result = await getInsuranceList()
-    insuranceList.value = result?.data?.list || []
+    const data = await getInsuranceList()
+    insuranceList.value = data?.list || []
     console.log('获取到的保险列表:', insuranceList.value)
 
     // 如果有保险数据，设置默认选中第一个
@@ -446,9 +421,7 @@ onLoad(async (options) => {
 
   try {
     const { code } = await uni.login()
-    const {
-      data: { openid: tempOpenid },
-    } = await getOpenid({ code })
+    const { openid: tempOpenid } = await getOpenid({ code })
     console.log(tempOpenid)
     openid.value = tempOpenid
 
@@ -505,7 +478,7 @@ const handleSubmit = async () => {
         await updateLeader(submitData)
         toast.show('队长信息更新成功！')
       } else {
-        const { data: payData } = await joinTeam(submitData)
+        const payData = await joinTeam(submitData)
         console.log(payData)
         uni.requestPayment({
           provider: 'wxpay',

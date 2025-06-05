@@ -348,7 +348,7 @@ const id = ref(null)
 const teamDetail = ref(null)
 const isVerticalImage = ref(false) // 判断是否为竖图
 
-const { run: runGetList } = useRequest((e) => httpGet(`/api/team/user/detail/${e.id}`))
+const { run: getTeamDetail } = useRequest((e) => httpGet(`/api/team/user/detail/${e.id}`))
 
 // 计算属性
 const hasDrivers = computed(() => {
@@ -404,7 +404,7 @@ onLoad(async (options) => {
 
 onShow(async () => {
   try {
-    const data = await runGetList({ id: id.value })
+    const data = await getTeamDetail({ id: id.value })
     teamDetail.value = data.team_detail
     console.log('Team detail:', teamDetail.value)
   } catch (error) {
@@ -551,7 +551,7 @@ const reviewDriver = async (participantId, reviewStatus) => {
 
     // 刷新页面数据
     setTimeout(async () => {
-      const data = await runGetList({ id: id.value })
+      const data = await getTeamDetail({ id: id.value })
       teamDetail.value = data.team_detail
     }, 1000)
   } catch (error) {
@@ -664,7 +664,7 @@ const handleJoinCar = async (driverData) => {
 
           // 刷新页面数据
           setTimeout(async () => {
-            const data = await runGetList({ id: id.value })
+            const data = await getTeamDetail({ id: id.value })
             teamDetail.value = data.team_detail
           }, 1000)
         }
@@ -703,7 +703,7 @@ const handleExitCar = async (driverData) => {
 
           // 刷新页面数据
           setTimeout(async () => {
-            const data = await runGetList({ id: id.value })
+            const data = await getTeamDetail({ id: id.value })
             teamDetail.value = data.team_detail
           }, 1000)
         }
@@ -741,7 +741,7 @@ const handleExitDriver = async (driverData) => {
 
           // 刷新页面数据
           setTimeout(async () => {
-            const data = await runGetList({ id: id.value })
+            const data = await getTeamDetail({ id: id.value })
             teamDetail.value = data.team_detail
           }, 1000)
         }
