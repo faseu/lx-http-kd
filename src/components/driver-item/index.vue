@@ -88,6 +88,9 @@
             退出该车
           </view>
 
+          <!-- 未报名队伍的情况 -->
+          <view v-else-if="!isMember" class="big-btn big-btn-3">未报名</view>
+
           <!-- 可以上车的情况 -->
           <view
             v-else-if="availableSeats > 0 && +item.driver_review_status === 1"
@@ -153,6 +156,10 @@ const props = defineProps({
   showReviewStatus: {
     type: Boolean,
     default: false, // 是否显示审核按钮（仅创建者可见）
+  },
+  isMember: {
+    type: Boolean,
+    default: true,
   },
 })
 

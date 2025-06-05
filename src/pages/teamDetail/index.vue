@@ -7,6 +7,7 @@
 </route>
 <template>
   <view class="w-full min-h-100vh bg-[#F6F8FA] box-border text-24rpx color-[#333]">
+    s
     <view class="banner-container">
       <image
         class="banner-image"
@@ -342,7 +343,9 @@ import driverItem from '@/components/driver-item/index.vue'
 import { onLoad, onShow } from '@dcloudio/uni-app'
 import { ref, computed } from 'vue'
 import { useUserStore } from '@/store'
+import { useMessage } from 'wot-design-uni'
 const userStore = useUserStore()
+const message = useMessage() // 初始化 message
 
 const id = ref(null)
 const teamDetail = ref(null)
@@ -495,33 +498,35 @@ const getCurrentUserId = () => {
   return id
 }
 
-// 退出队伍功能
+// 退出队伍功能 - 使用 wd-message-box
 const exitTeam = async () => {
   try {
-    uni.showModal({
-      title: '确认退出',
-      content: '确定要退出该队伍吗？退出后需要重新报名。',
-      success: async (res) => {
-        if (res.confirm) {
-          uni.showLoading({ title: '处理中...' })
+    message
+      .confirm({
+        msg: '确定要退出该队伍吗？退出后需要重新报名。',
+        title: '确认退出',
+      })
+      .then(async () => {
+        uni.showLoading({ title: '处理中...' })
 
-          await httpPost('/api/pay/refund', {
-            team_id: teamDetail.value?.id,
-          })
+        await httpPost('/api/pay/refund', {
+          team_id: teamDetail.value?.id,
+        })
 
-          uni.hideLoading()
-          uni.showToast({
-            title: '退出成功',
-            icon: 'success',
-          })
+        uni.hideLoading()
+        uni.showToast({
+          title: '退出成功',
+          icon: 'success',
+        })
 
-          // 刷新页面数据
-          setTimeout(() => {
-            uni.navigateBack()
-          }, 1000)
-        }
-      },
-    })
+        // 刷新页面数据
+        setTimeout(() => {
+          uni.navigateBack()
+        }, 1000)
+      })
+      .catch(() => {
+        console.log('取消退出队伍')
+      })
   } catch (error) {
     uni.hideLoading()
     uni.showToast({
@@ -607,69 +612,94 @@ const getDriverReviewStatusText = (status) => {
   return statusMap[status] || '未知'
 }
 
-// 审核通过司机
+// 审核通过司机 - 使用 wd-message-box
 const handleApproveDriver = async (driverData) => {
   try {
-    uni.showModal({
-      title: '确认审核',
-      content: `确定通过 ${driverData.name || '该司机'} 的司机申请吗？`,
-      success: async (res) => {
-        if (res.confirm) {
-          await reviewDriver(driverData.id, 1) // 1表示审核通过
-        }
-      },
-    })
+    message
+      .confirm({
+        msg: `确定通过 ${driverData.name || '该司机'} 的司机申请吗？`,
+        title: '确认审核',
+      })
+      .then(async () => {
+        await reviewDriver(driverData.id, 1) // 1表示审核通过
+      })
+      .catch(() => {
+        console.log('取消审核通过')
+      })
   } catch (error) {
     console.error('审核通过司机失败:', error)
   }
 }
 
-// 审核拒绝司机
+// 审核拒绝司机 - 使用 wd-message-box
 const handleRejectDriver = async (driverData) => {
   try {
-    uni.showModal({
-      title: '确认审核',
-      content: `确定拒绝 ${driverData.name || '该司机'} 的司机申请吗？`,
-      success: async (res) => {
-        if (res.confirm) {
-          await reviewDriver(driverData.id, 2) // 2表示审核拒绝
-        }
-      },
-    })
+    message
+      .confirm({
+        msg: `确定拒绝 ${driverData.name || '该司机'} 的司机申请吗？`,
+        title: '确认审核',
+      })
+      .then(async () => {
+        await reviewDriver(driverData.id, 2) // 2表示审核拒绝
+      })
+      .catch(() => {
+        console.log('取消审核拒绝')
+      })
   } catch (error) {
     console.error('审核拒绝司机失败:', error)
   }
 }
 
-// 加入车辆
+// 加入车辆 - 使用 wd-message-box
 const handleJoinCar = async (driverData) => {
   try {
-    uni.showModal({
-      title: '确认加入',
-      content: `确定要搭乘 ${driverData.name || '该司机'} 的车辆吗？`,
-      success: async (res) => {
-        if (res.confirm) {
-          uni.showLoading({ title: '处理中...' })
+    // 首先检查用户是否已经报名加入队伍
+    if (!teamDetail.value?.is_member) {
+      message
+        .confirm({
+          msg: '您还未报名参加此队伍，请先报名后再选择车辆。',
+          title: '提醒',
+          confirmButtonText: '去报名',
+          cancelButtonText: '取消',
+        })
+        .then(() => {
+          // 跳转到报名页面
+          goToJoinTeam(teamDetail.value?.id)
+        })
+        .catch(() => {
+          console.log('取消报名')
+        })
+      return
+    }
 
-          await httpPost('/api/team/update_user', {
-            driver_id: driverData.id,
-            team_id: teamDetail.value?.id,
-          })
+    message
+      .confirm({
+        msg: `确定要搭乘 ${driverData.name || '该司机'} 的车辆吗？`,
+        title: '确认加入',
+      })
+      .then(async () => {
+        uni.showLoading({ title: '处理中...' })
 
-          uni.hideLoading()
-          uni.showToast({
-            title: '加入成功',
-            icon: 'success',
-          })
+        await httpPost('/api/team/update_user', {
+          driver_id: driverData.id,
+          team_id: teamDetail.value?.id,
+        })
 
-          // 刷新页面数据
-          setTimeout(async () => {
-            const data = await getTeamDetail({ id: id.value })
-            teamDetail.value = data.team_detail
-          }, 1000)
-        }
-      },
-    })
+        uni.hideLoading()
+        uni.showToast({
+          title: '加入成功',
+          icon: 'success',
+        })
+
+        // 刷新页面数据
+        setTimeout(async () => {
+          const data = await getTeamDetail({ id: id.value })
+          teamDetail.value = data.team_detail
+        }, 1000)
+      })
+      .catch(() => {
+        console.log('取消加入车辆')
+      })
   } catch (error) {
     uni.hideLoading()
     uni.showToast({
@@ -680,35 +710,37 @@ const handleJoinCar = async (driverData) => {
   }
 }
 
-// 退出车辆
+// 退出车辆 - 使用 wd-message-box
 const handleExitCar = async (driverData) => {
   try {
-    uni.showModal({
-      title: '确认退出',
-      content: `确定要退出 ${driverData.name || '该司机'} 的车辆吗？`,
-      success: async (res) => {
-        if (res.confirm) {
-          uni.showLoading({ title: '处理中...' })
+    message
+      .confirm({
+        msg: `确定要退出 ${driverData.name || '该司机'} 的车辆吗？`,
+        title: '确认退出',
+      })
+      .then(async () => {
+        uni.showLoading({ title: '处理中...' })
 
-          await httpPost('/api/team/exit_car', {
-            driver_id: driverData.id,
-            team_id: teamDetail.value?.id,
-          })
+        await httpPost('/api/team/exit_car', {
+          driver_id: driverData.id,
+          team_id: teamDetail.value?.id,
+        })
 
-          uni.hideLoading()
-          uni.showToast({
-            title: '退出成功',
-            icon: 'success',
-          })
+        uni.hideLoading()
+        uni.showToast({
+          title: '退出成功',
+          icon: 'success',
+        })
 
-          // 刷新页面数据
-          setTimeout(async () => {
-            const data = await getTeamDetail({ id: id.value })
-            teamDetail.value = data.team_detail
-          }, 1000)
-        }
-      },
-    })
+        // 刷新页面数据
+        setTimeout(async () => {
+          const data = await getTeamDetail({ id: id.value })
+          teamDetail.value = data.team_detail
+        }, 1000)
+      })
+      .catch(() => {
+        console.log('取消退出车辆')
+      })
   } catch (error) {
     uni.hideLoading()
     uni.showToast({
@@ -719,34 +751,36 @@ const handleExitCar = async (driverData) => {
   }
 }
 
-// 退出司机身份
+// 退出司机身份 - 使用 wd-message-box
 const handleExitDriver = async (driverData) => {
   try {
-    uni.showModal({
-      title: '确认退出',
-      content: '确定要取消司机身份吗？取消后将不再为其他队员提供车辆服务。',
-      success: async (res) => {
-        if (res.confirm) {
-          uni.showLoading({ title: '处理中...' })
+    message
+      .confirm({
+        msg: '确定要取消司机身份吗？取消后将不再为其他队员提供车辆服务。',
+        title: '确认退出',
+      })
+      .then(async () => {
+        uni.showLoading({ title: '处理中...' })
 
-          await httpPost('/api/team/quit_driver', {
-            team_id: teamDetail.value?.id,
-          })
+        await httpPost('/api/team/quit_driver', {
+          team_id: teamDetail.value?.id,
+        })
 
-          uni.hideLoading()
-          uni.showToast({
-            title: '退出成功',
-            icon: 'success',
-          })
+        uni.hideLoading()
+        uni.showToast({
+          title: '退出成功',
+          icon: 'success',
+        })
 
-          // 刷新页面数据
-          setTimeout(async () => {
-            const data = await getTeamDetail({ id: id.value })
-            teamDetail.value = data.team_detail
-          }, 1000)
-        }
-      },
-    })
+        // 刷新页面数据
+        setTimeout(async () => {
+          const data = await getTeamDetail({ id: id.value })
+          teamDetail.value = data.team_detail
+        }, 1000)
+      })
+      .catch(() => {
+        console.log('取消退出司机身份')
+      })
   } catch (error) {
     uni.hideLoading()
     uni.showToast({
