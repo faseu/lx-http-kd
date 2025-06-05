@@ -172,7 +172,20 @@
 
       <!-- 车主信息 -->
       <view class="mt-20rpx" v-if="hasDrivers">
-        <view class="font-bold text-28rpx">车主信息</view>
+        <view class="font-bold text-28rpx flex justify-between items-center">
+          <view>车主信息</view>
+          <wd-button
+            custom-style="margin: 0; background-color: #FF8C28 !important;"
+            type="primary"
+            @click="goToDriverForm"
+            size="small"
+            v-if="
+              teamDetail?.is_member && !isCurrentUserDriver && teamDetail?.travel_method === '拼车'
+            "
+          >
+            我要当车主
+          </wd-button>
+        </view>
         <view class="mt-20rpx">
           <view v-for="driver in processedDrivers" :key="driver.id">
             <driverItem
@@ -341,15 +354,17 @@
 import { httpGet, httpPost } from '@/utils/http'
 import driverItem from '@/components/driver-item/index.vue'
 import { onLoad, onShow } from '@dcloudio/uni-app'
-import { ref, computed } from 'vue'
+import { ref, computed, reactive } from 'vue'
 import { useUserStore } from '@/store'
-import { useMessage } from 'wot-design-uni'
+import { useMessage, useToast } from 'wot-design-uni'
+
 const userStore = useUserStore()
-const message = useMessage() // 初始化 message
+const message = useMessage()
+const toast = useToast()
 
 const id = ref(null)
 const teamDetail = ref(null)
-const isVerticalImage = ref(false) // 判断是否为竖图
+const isVerticalImage = ref(false)
 
 const { run: getTeamDetail } = useRequest((e) => httpGet(`/api/team/user/detail/${e.id}`))
 
@@ -360,6 +375,16 @@ const hasDrivers = computed(() => {
 
 const drivers = computed(() => {
   return teamDetail.value?.members_info?.filter((member) => member.is_driver) || []
+})
+
+// 检查当前用户是否已经是车主
+const isCurrentUserDriver = computed(() => {
+  const currentUserId = getCurrentUserId()
+  return (
+    teamDetail.value?.members_info?.some(
+      (member) => member.is_driver && member.user_info?.id === currentUserId,
+    ) || false
+  )
 })
 
 // 计算除第一张外的其他活动图片
@@ -399,6 +424,13 @@ const getCostMethodText = (method) => {
 const maskPhone = (phone) => {
   if (!phone) return ''
   return phone.replace(/(\d{3})\d{4}(\d{4})/, '$1****$2')
+}
+
+// 跳转到车主申请页面
+const goToDriverForm = () => {
+  uni.navigateTo({
+    url: `/pages/applyDriver/index?teamId=${teamDetail.value?.id}`,
+  })
 }
 
 onLoad(async (options) => {

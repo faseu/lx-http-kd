@@ -5,6 +5,7 @@
 
 interface NavigateToOptions {
   url: "/pages/home/index" |
+       "/pages/applyDriver/index" |
        "/pages/chatRoom/index" |
        "/pages/homePage/activityDetail" |
        "/pages/homePage/goHiking" |

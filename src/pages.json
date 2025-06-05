@@ -59,6 +59,14 @@
       }
     },
     {
+      "path": "pages/applyDriver/index",
+      "type": "page",
+      "style": {
+        "navigationBarTitleText": "申请成为车主",
+        "navigationBarBackgroundColor": "#ffffff"
+      }
+    },
+    {
       "path": "pages/chatRoom/index",
       "type": "page",
       "style": {
