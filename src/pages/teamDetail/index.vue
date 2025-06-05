@@ -7,7 +7,6 @@
 </route>
 <template>
   <view class="w-full min-h-100vh bg-[#F6F8FA] box-border text-24rpx color-[#333]">
-    s
     <view class="banner-container">
       <image
         class="banner-image"
