@@ -179,7 +179,9 @@ const displayPassengers = computed(() => {
 
 // 获取性别图标
 const getGenderIcon = (gender) => {
-  return gender === 2 ? '/static/images/common/female.png' : '/static/images/common/male.png'
+  return gender === 2
+    ? '/static/images/common/female-icon.png'
+    : '/static/images/common/male-icon.png'
 }
 
 // 格式化车牌号（脱敏处理）
