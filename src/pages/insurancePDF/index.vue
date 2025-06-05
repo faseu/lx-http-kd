@@ -266,8 +266,10 @@ const goBack = () => {
 
   .file-list {
     position: relative;
-
     padding: 20rpx 30rpx;
+    width: 100%;
+    border-radius: 20rpx;
+    background: linear-gradient(to bottom, #d9f5fd 76%, #ffffff 100%);
   }
 
   .file-item {

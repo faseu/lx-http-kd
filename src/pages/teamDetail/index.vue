@@ -173,8 +173,17 @@
       <view class="mt-20rpx" v-if="hasDrivers">
         <view class="font-bold text-28rpx">车主信息</view>
         <view class="mt-20rpx">
-          <view>
-            <driverItem v-for="driver in drivers" :key="driver.user_info.id" :driver="driver" />
+          <view v-for="driver in processedDrivers" :key="driver.id">
+            <driverItem
+              :item="driver"
+              :bg="'#ffffff'"
+              :showReviewStatus="teamDetail?.is_leader"
+              @approve-driver="handleApproveDriver"
+              @reject-driver="handleRejectDriver"
+              @join-car="handleJoinCar"
+              @exit-car="handleExitCar"
+              @exit-driver="handleExitDriver"
+            />
           </view>
         </view>
       </view>
@@ -315,11 +324,11 @@
           custom-style="flex: 1; background-color: #000000 !important;"
           type="primary"
           size="large"
-          @click="() => goToJoinTeam(teamDetail?.id)"
-          :disabled="teamDetail?.is_full"
+          @click="handleJoinButtonClick"
+          :disabled="getButtonDisabled"
           block
         >
-          {{ teamDetail?.is_member ? '已报名' : teamDetail?.is_full ? '已满员' : '报名' }}
+          {{ getButtonText }}
         </wd-button>
       </view>
       <wd-gap bg-color="#FFFFFF" safe-area-bottom height="0"></wd-gap>
@@ -332,6 +341,8 @@ import { httpGet, httpPost } from '@/utils/http'
 import driverItem from '@/components/driver-item/index.vue'
 import { onLoad, onShow } from '@dcloudio/uni-app'
 import { ref, computed } from 'vue'
+import { useUserStore } from '@/store'
+const userStore = useUserStore()
 
 const id = ref(null)
 const teamDetail = ref(null)
@@ -371,33 +382,6 @@ const formatDateTime = (dateTimeStr) => {
   return `${year}-${month}-${day} ${hour}:${minute} ${weekday}`
 }
 
-// 计算活动时长
-const calculateDuration = () => {
-  if (!teamDetail.value?.start_time || !teamDetail.value?.end_time) return '未知'
-
-  const start = new Date(teamDetail.value.start_time)
-  const end = new Date(teamDetail.value.end_time)
-  const diffMs = end - start
-  const diffHours = Math.floor(diffMs / (1000 * 60 * 60))
-  const diffDays = Math.floor(diffHours / 24)
-
-  if (diffDays > 0) {
-    return `${diffDays}天${diffHours % 24}小时`
-  } else {
-    return `${diffHours}小时`
-  }
-}
-
-// 获取审核状态文本
-const getReviewStatus = (status) => {
-  const statusMap = {
-    0: '待审核',
-    1: '已通过',
-    2: '未通过',
-  }
-  return statusMap[status] || '未知'
-}
-
 // 获取费用分摊方式文本
 const getCostMethodText = (method) => {
   const methodMap = {
@@ -414,12 +398,13 @@ const maskPhone = (phone) => {
   return phone.replace(/(\d{3})\d{4}(\d{4})/, '$1****$2')
 }
 
-onShow(async () => {})
-
 onLoad(async (options) => {
   id.value = options.id
+})
+
+onShow(async () => {
   try {
-    const data = await runGetList({ id: options.id })
+    const data = await runGetList({ id: id.value })
     teamDetail.value = data.team_detail
     console.log('Team detail:', teamDetail.value)
   } catch (error) {
@@ -468,6 +453,309 @@ const handleImageError = (e) => {
   console.error('图片加载失败:', e)
   isVerticalImage.value = false // 错误时默认为横图
 }
+
+const processedDrivers = computed(() => {
+  if (!teamDetail.value?.members_info) return []
+
+  const currentUserId = getCurrentUserId() // 需要获取当前用户ID的方法
+
+  return teamDetail.value.members_info
+    .filter((member) => member.is_driver)
+    .map((driver) => {
+      const isCurrentUserCar = driver.user_info?.id === currentUserId
+      const isCurrentUserPassenger = driver.car_passengers?.some(
+        (passenger) => passenger.user_info.id === currentUserId,
+      )
+
+      return {
+        id: driver.id,
+        name: driver.name || driver.user_info?.nickname || '匿名司机',
+        avatar: driver.user_info?.avatar || 'https://temp.im/166x166',
+        gender: driver.user_info?.gender || 1,
+        license_plate: driver.license_plate || '未知车牌',
+        pickup_location: driver.pickup_location || '待确定上车点',
+        car_seat_count: driver.car_seat_count || 4,
+        car_passengers: driver.car_passengers || [],
+        driver_review_status: driver.driver_review_status || '0',
+        is_current_user_car: isCurrentUserCar,
+        is_current_user_passenger: isCurrentUserPassenger,
+        // 保留原始数据
+        originalData: driver,
+      }
+    })
+})
+
+// 获取当前用户ID（需要根据你的用户管理方式实现）
+const getCurrentUserId = () => {
+  // 这里需要根据你的项目实际情况获取当前用户ID
+  // 例如从 store、localStorage 或其他地方获取
+  const {
+    user_info: { id },
+  } = userStore.userInfo
+  return id
+}
+
+// 退出队伍功能
+const exitTeam = async () => {
+  try {
+    uni.showModal({
+      title: '确认退出',
+      content: '确定要退出该队伍吗？退出后需要重新报名。',
+      success: async (res) => {
+        if (res.confirm) {
+          uni.showLoading({ title: '处理中...' })
+
+          await httpPost('/api/pay/refund', {
+            team_id: teamDetail.value?.id,
+          })
+
+          uni.hideLoading()
+          uni.showToast({
+            title: '退出成功',
+            icon: 'success',
+          })
+
+          // 刷新页面数据
+          setTimeout(() => {
+            uni.navigateBack()
+          }, 1000)
+        }
+      },
+    })
+  } catch (error) {
+    uni.hideLoading()
+    uni.showToast({
+      title: '退出失败',
+      icon: 'error',
+    })
+    console.error('退出队伍失败:', error)
+  }
+}
+
+// 审核司机功能（仅创建者可用）
+const reviewDriver = async (participantId, reviewStatus) => {
+  try {
+    uni.showLoading({ title: '处理中...' })
+
+    await httpPost('/api/team/review_driver', {
+      participant_id: participantId,
+      review_status: reviewStatus, // 0:待审核, 1:通过, 2:拒绝
+      team_id: teamDetail.value?.id,
+    })
+
+    uni.hideLoading()
+    uni.showToast({
+      title: reviewStatus === 1 ? '审核通过' : '审核拒绝',
+      icon: 'success',
+    })
+
+    // 刷新页面数据
+    setTimeout(async () => {
+      const data = await runGetList({ id: id.value })
+      teamDetail.value = data.team_detail
+    }, 1000)
+  } catch (error) {
+    uni.hideLoading()
+    uni.showToast({
+      title: '审核失败',
+      icon: 'error',
+    })
+    console.error('审核司机失败:', error)
+  }
+}
+
+// 修改报名按钮的点击逻辑
+const handleJoinButtonClick = () => {
+  if (teamDetail.value?.is_member) {
+    // 已经是成员，执行退出操作
+    exitTeam()
+  } else if (teamDetail.value?.is_full) {
+    // 队伍已满，不执行任何操作
+    uni.showToast({
+      title: '队伍已满',
+      icon: 'none',
+    })
+  } else {
+    // 非成员，跳转到报名页面
+    goToJoinTeam(teamDetail.value?.id)
+  }
+}
+
+// 获取按钮文本
+const getButtonText = computed(() => {
+  if (teamDetail.value?.is_member) {
+    return '退出队伍'
+  } else if (teamDetail.value?.is_full) {
+    return '已满员'
+  } else {
+    return '报名'
+  }
+})
+
+// 获取按钮状态
+const getButtonDisabled = computed(() => {
+  return teamDetail.value?.is_full && !teamDetail.value?.is_member
+})
+
+// 在司机信息展示区域添加审核功能（仅创建者可见）
+const getDriverReviewStatusText = (status) => {
+  const statusMap = {
+    0: '待审核',
+    1: '已通过',
+    2: '已拒绝',
+  }
+  return statusMap[status] || '未知'
+}
+
+// 审核通过司机
+const handleApproveDriver = async (driverData) => {
+  try {
+    uni.showModal({
+      title: '确认审核',
+      content: `确定通过 ${driverData.name || '该司机'} 的司机申请吗？`,
+      success: async (res) => {
+        if (res.confirm) {
+          await reviewDriver(driverData.id, 1) // 1表示审核通过
+        }
+      },
+    })
+  } catch (error) {
+    console.error('审核通过司机失败:', error)
+  }
+}
+
+// 审核拒绝司机
+const handleRejectDriver = async (driverData) => {
+  try {
+    uni.showModal({
+      title: '确认审核',
+      content: `确定拒绝 ${driverData.name || '该司机'} 的司机申请吗？`,
+      success: async (res) => {
+        if (res.confirm) {
+          await reviewDriver(driverData.id, 2) // 2表示审核拒绝
+        }
+      },
+    })
+  } catch (error) {
+    console.error('审核拒绝司机失败:', error)
+  }
+}
+
+// 加入车辆
+const handleJoinCar = async (driverData) => {
+  try {
+    uni.showModal({
+      title: '确认加入',
+      content: `确定要搭乘 ${driverData.name || '该司机'} 的车辆吗？`,
+      success: async (res) => {
+        if (res.confirm) {
+          uni.showLoading({ title: '处理中...' })
+
+          await httpPost('/api/team/update_user', {
+            driver_id: driverData.id,
+            team_id: teamDetail.value?.id,
+          })
+
+          uni.hideLoading()
+          uni.showToast({
+            title: '加入成功',
+            icon: 'success',
+          })
+
+          // 刷新页面数据
+          setTimeout(async () => {
+            const data = await runGetList({ id: id.value })
+            teamDetail.value = data.team_detail
+          }, 1000)
+        }
+      },
+    })
+  } catch (error) {
+    uni.hideLoading()
+    uni.showToast({
+      title: '加入失败',
+      icon: 'error',
+    })
+    console.error('加入车辆失败:', error)
+  }
+}
+
+// 退出车辆
+const handleExitCar = async (driverData) => {
+  try {
+    uni.showModal({
+      title: '确认退出',
+      content: `确定要退出 ${driverData.name || '该司机'} 的车辆吗？`,
+      success: async (res) => {
+        if (res.confirm) {
+          uni.showLoading({ title: '处理中...' })
+
+          await httpPost('/api/team/exit_car', {
+            driver_id: driverData.id,
+            team_id: teamDetail.value?.id,
+          })
+
+          uni.hideLoading()
+          uni.showToast({
+            title: '退出成功',
+            icon: 'success',
+          })
+
+          // 刷新页面数据
+          setTimeout(async () => {
+            const data = await runGetList({ id: id.value })
+            teamDetail.value = data.team_detail
+          }, 1000)
+        }
+      },
+    })
+  } catch (error) {
+    uni.hideLoading()
+    uni.showToast({
+      title: '退出失败',
+      icon: 'error',
+    })
+    console.error('退出车辆失败:', error)
+  }
+}
+
+// 退出司机身份
+const handleExitDriver = async (driverData) => {
+  try {
+    uni.showModal({
+      title: '确认退出',
+      content: '确定要取消司机身份吗？取消后将不再为其他队员提供车辆服务。',
+      success: async (res) => {
+        if (res.confirm) {
+          uni.showLoading({ title: '处理中...' })
+
+          await httpPost('/api/team/quit_driver', {
+            team_id: teamDetail.value?.id,
+          })
+
+          uni.hideLoading()
+          uni.showToast({
+            title: '退出成功',
+            icon: 'success',
+          })
+
+          // 刷新页面数据
+          setTimeout(async () => {
+            const data = await runGetList({ id: id.value })
+            teamDetail.value = data.team_detail
+          }, 1000)
+        }
+      },
+    })
+  } catch (error) {
+    uni.hideLoading()
+    uni.showToast({
+      title: '退出失败',
+      icon: 'error',
+    })
+    console.error('退出司机身份失败:', error)
+  }
+}
 </script>
 
 <style lang="scss">
@@ -476,6 +764,7 @@ const handleImageError = (e) => {
   box-sizing: border-box;
   width: 100%;
   position: fixed;
+  z-index: 99;
   bottom: 0;
   left: 0;
 }

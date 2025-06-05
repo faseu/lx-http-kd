@@ -66,9 +66,23 @@
         </view>
       </view>
 
-      <view>
-        <driverItem bg="#f6f8fa" />
-        <driverItem bg="#f6f8fa" />
+      <!-- 车主信息展示 -->
+      <view v-if="teamDrivers.length > 0" class="mt-20rpx">
+        <wd-cell-group title="当前车主信息">
+          <template #value>
+            <text class="color-[#999] text-24rpx">可选择搭乘以下车主的车辆</text>
+          </template>
+        </wd-cell-group>
+        <view class="drivers-container">
+          <driverItem
+            v-for="driver in teamDrivers"
+            :key="driver.id"
+            :item="driver"
+            :bg="'#f6f8fa'"
+            :showReviewStatus="false"
+            @join-car="handleSelectDriver"
+          />
+        </view>
       </view>
 
       <wd-cell-group title="当车主">
@@ -218,6 +232,8 @@ const leaderId = ref()
 const basePrice = ref(0) // 队伍基础费用
 const insuranceList = ref([]) // 保险列表
 const loading = ref(false)
+const teamDetail = ref(null) // 新增：队伍详情数据
+const selectedDriverId = ref(null) // 新增：选中的司机ID
 
 // 选中的保险信息（默认值）
 const selectedInsurance = ref({
@@ -232,7 +248,7 @@ const model = reactive({
   name: '',
   id_card: '',
   phone: '',
-  is_driver: true,
+  is_driver: false, // 修改默认值为false
   car_seat_count: '',
   license_plate: '',
   emergency_contact: '',
@@ -240,6 +256,39 @@ const model = reactive({
   fileList1: [],
   fileList2: [],
   read: false,
+  driver_id: null, // 新增：选中的司机ID
+})
+
+// 计算属性：获取队伍中的司机列表
+const teamDrivers = computed(() => {
+  if (!teamDetail.value?.members_info) return []
+
+  const currentUserId = localLeaderId
+
+  return teamDetail.value.members_info
+    .filter((member) => member.is_driver && member.driver_review_status === 1) // 只显示审核通过的司机
+    .map((driver) => {
+      const isCurrentUserCar = driver.user_info?.id === currentUserId
+      const isCurrentUserPassenger = driver.car_passengers?.some(
+        (passenger) => passenger.user_info.id === currentUserId,
+      )
+
+      return {
+        id: driver.id,
+        name: driver.name || driver.user_info?.nickname || '匿名司机',
+        avatar: driver.user_info?.avatar || 'https://temp.im/166x166',
+        gender: driver.user_info?.gender || 1,
+        license_plate: driver.license_plate || '未知车牌',
+        pickup_location: driver.pickup_location || '待确定上车点',
+        car_seat_count: driver.car_seat_count || 4,
+        car_passengers: driver.car_passengers || [],
+        driver_review_status: driver.driver_review_status || '1',
+        is_current_user_car: isCurrentUserCar,
+        is_current_user_passenger: isCurrentUserPassenger,
+        // 保留原始数据
+        originalData: driver,
+      }
+    })
 })
 
 // 计算总价格（基础费用 + 保险费用）
@@ -271,7 +320,14 @@ const getRules = () => ({
 const handleInsuranceChange = (insuranceData) => {
   console.log('选中保险:', insuranceData)
   selectedInsurance.value = insuranceData
-  // toast.show(`已选择${insuranceData.name}，保费￥${insuranceData.price}/人`)
+}
+
+// 新增：处理选择司机车辆
+const handleSelectDriver = (driverData) => {
+  console.log('选择司机车辆:', driverData)
+  selectedDriverId.value = driverData.id
+  model.driver_id = driverData.id
+  toast.show(`已选择${driverData.name}的车辆`)
 }
 
 // 简化的请求函数
@@ -297,10 +353,10 @@ const { run: updateLeader } = useRequest((e) => httpPost('/api/activity/team/upd
 const { run: getInsuranceList } = useRequest((e) => httpGet('/api/insurance_list', e))
 const { run: getOpenid } = useRequest((e) => httpPost('/api/get_openid', e))
 const { run: cancelPay } = useRequest((e) => httpPost('/api/pay/cancel', e))
-// 🆕 新增：获取用户信息的请求函数
 const { run: getUserInfo } = useRequest(() => httpGet('/api/get_user'))
+const { run: getTeamDetail } = useRequest((e) => httpGet(`/api/team/user/detail/${e.id}`)) // 新增：获取队伍详情
 
-// 🆕 新增：获取并填充用户信息
+// 获取并填充用户信息
 const fetchAndFillUserInfo = async () => {
   try {
     const result = await getUserInfo()
@@ -325,11 +381,21 @@ const fetchAndFillUserInfo = async () => {
       }
 
       console.log('已自动填充用户信息:', userInfo)
-      // toast.show('已自动填充个人信息')
     }
   } catch (error) {
     console.error('获取用户信息失败:', error)
-    // 静默处理，不影响用户体验
+  }
+}
+
+// 新增：获取队伍详情
+const fetchTeamDetail = async (teamId) => {
+  try {
+    const data = await getTeamDetail({ id: teamId })
+    console.log(data)
+    teamDetail.value = data.team_detail
+    console.log('获取到的队伍详情:', teamDetail.value)
+  } catch (error) {
+    console.error('获取队伍详情失败:', error)
   }
 }
 
@@ -378,7 +444,6 @@ onLoad(async (options) => {
     basePrice.value = options.price
   }
 
-  // 🆕 修改：并行执行获取用户信息和其他初始化操作
   try {
     const { code } = await uni.login()
     const {
@@ -387,10 +452,11 @@ onLoad(async (options) => {
     console.log(tempOpenid)
     openid.value = tempOpenid
 
-    // 并行执行获取保险列表和用户信息
+    // 并行执行获取保险列表、用户信息和队伍详情
     await Promise.all([
       fetchInsuranceList(),
-      fetchAndFillUserInfo(), // 🆕 新增：获取并填充用户信息
+      fetchAndFillUserInfo(),
+      fetchTeamDetail(id.value), // 新增：获取队伍详情
     ])
   } catch (error) {
     console.error('初始化失败:', error)
@@ -423,8 +489,8 @@ const handleSubmit = async () => {
       ...model,
       team_id: id.value,
       openid: openid.value,
-      insurance_id: selectedInsurance.value.id, // 只需要保险ID
-      privacy_agreement: model.read, // 只需要保险ID
+      insurance_id: selectedInsurance.value.id,
+      privacy_agreement: model.read,
     }
 
     // 如果是车主，添加车辆照片
@@ -450,17 +516,15 @@ const handleSubmit = async () => {
           paySign: payData.paySign,
           success: (res) => {
             uni.showToast({ title: '支付成功，加入小队' })
+            setTimeout(() => {
+              uni.navigateBack()
+            }, 1500)
           },
           fail: (err) => {
-            cancelPay({ order_id: payData.order_id })
             uni.showToast({ title: '支付失败', icon: 'none' })
           },
         })
       }
-
-      setTimeout(() => {
-        uni.navigateBack()
-      }, 1500)
     } catch (error) {
       console.error('提交失败:', error)
       toast.show('提交失败，请重试')
@@ -525,6 +589,11 @@ const onDeleteCar = () => {
   padding: 20rpx;
   box-sizing: border-box;
   overflow-x: hidden;
+}
+
+// 新增：司机容器样式
+.drivers-container {
+  padding: 0 20rpx;
 }
 
 // 保险信息显示样式

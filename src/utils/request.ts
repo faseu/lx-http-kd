@@ -30,7 +30,7 @@ const http = <T>(options: CustomRequestOptions) => {
           !options.hideErrorToast &&
             uni.showToast({
               icon: 'none',
-              title: (res.data as T & { msg?: string })?.msg || '请求错误',
+              title: (res.data as T & { msg?: string })?.error || '请求错误',
             })
           reject(res)
         }
