@@ -50,9 +50,9 @@
           <!-- 如果没有乘客，显示空状态 -->
           <view
             v-if="displayPassengers.length === 0"
-            class="flex justify-center items-center w-60rpx h-60rpx bg-[#F5F5F5] rounded-[50%] border-2rpx border-dashed border-[#CCCCCC]"
+            class="flex justify-center items-center w-60rpx h-60rpx rounded-[50%]"
           >
-            <text class="text-20rpx color-[#999]">空</text>
+            <text class="text-24rpx color-[#999]">暂无</text>
           </view>
         </view>
       </view>
@@ -162,7 +162,7 @@ const emit = defineEmits(['approve-driver', 'reject-driver', 'join-car', 'exit-c
 const availableSeats = computed(() => {
   const totalSeats = props.item.car_seat_count || 4
   const occupiedSeats = props.item.car_passengers?.length || 0
-  return Math.max(0, totalSeats - occupiedSeats) // -1 是司机座位
+  return Math.max(0, totalSeats - occupiedSeats)
 })
 
 // 显示的乘客（最多显示3个）

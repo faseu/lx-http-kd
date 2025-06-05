@@ -313,8 +313,8 @@ onLoad(async (options) => {
 const initialModel = {
   title: '活动名',
   location: '不不不',
-  start_time: new Date(),
-  end_time: new Date(),
+  start_time: new Date().getTime(),
+  end_time: new Date().getTime(),
   hiking_type: '休闲徒步',
   hiking_distance: 12,
   hiking_duration: 5,
@@ -351,7 +351,7 @@ const validateTimeRange = () => {
   const now = new Date()
   const startTime = model.start_time
   const endTime = model.end_time
-
+  console.log(now, startTime, endTime)
   // 检查开始时间是否大于当前时间
   if (startTime <= now) {
     toast.show('开始时间必须大于当前时间')
@@ -392,7 +392,6 @@ const getRules = () => ({
   car_fee: [{ required: true, message: '请输入车费' }],
   insurance_cost: [{ required: true, message: '请输入保险费用' }],
   other_fee: [{ required: true, message: '请输入其他费用' }],
-  other_fee_introduced: [{ required: false }],
 
   // 装备信息（必选装备部分，如有强制项）
   'equipment_info.head': [{ required: true, message: '请选择头部装备' }],
@@ -400,7 +399,6 @@ const getRules = () => ({
   'equipment_info.lower_body': [{ required: true, message: '请选择下半身装备' }],
   'equipment_info.feet_body': [{ required: true, message: '请选择鞋子装备' }],
   'equipment_info.backpack': [{ required: true, message: '请选择背包装备' }],
-  'equipment_info.equipment_other': [{ required: false }],
 
   // 联系方式
   phone: [
@@ -416,19 +414,20 @@ const handleSubmit = async () => {
   if (!validateTimeRange()) {
     return
   }
-  const { valid, errors } = await form.value.validate()
-
+  console.log('时间范围校验')
   const allSuccess =
     model?.fileList?.length > 0 && model?.fileList?.every((item) => item.status === 'success')
   if (!allSuccess) {
     toast.show('请上传至少1张图片！')
     return
   }
+  const { valid, errors } = await form.value.validate()
+
   if (valid) {
     await createTeam({
       ...model,
-      start_time: dayjs(model.start_time).format('YYYY-MM-DD HH:mm'),
-      end_time: dayjs(model.end_time).format('YYYY-MM-DD HH:mm'),
+      start_time: model.start_time,
+      end_time: model.end_time,
       is_charged: +model.car_fee + +model.accommodation_fee + +model.other_fee > 0,
       max_participants: +model.max_participants,
       cost_method: model.is_car_required ? model.cost_method : 2,

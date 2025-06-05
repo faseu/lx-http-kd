@@ -58,7 +58,7 @@
         </view>
         <view class="info-item">
           <text class="label">保险费用：</text>
-          <text class="value price">￥{{ selectedInsurance.price }}/人</text>
+          <text class="value price">￥{{ selectedInsurance.price }}/人/天</text>
         </view>
         <view class="info-item">
           <text class="label">保障金额：</text>
@@ -67,16 +67,17 @@
       </view>
 
       <!-- 车主信息展示 -->
-      <view v-if="teamDrivers.length > 0" class="mt-20rpx">
+      <view v-if="processedDrivers.length > 0" class="mt-20rpx">
         <wd-cell-group title="当前车主信息">
           <view class="drivers-container">
             <driverItem
-              v-for="driver in teamDrivers"
+              v-for="driver in processedDrivers"
               :key="driver.id"
               :item="driver"
               :bg="'#f6f8fa'"
               :showReviewStatus="false"
               @join-car="handleSelectDriver"
+              @exit-car="handleExitCar"
             />
           </view>
         </wd-cell-group>
@@ -186,6 +187,7 @@
           <view class="flex-1 mr-48rpx">
             <text>应付金额 ：</text>
             <text style="color: #d8aa4f">{{ `¥ ${totalPrice}` }}</text>
+            <text class="text-20rpx color-[#999] ml-8rpx">({{ activityDays }}天)</text>
           </view>
           <wd-button
             custom-style="width: 320rpx; background-color: #4BD06E !important;"
@@ -218,7 +220,7 @@ const toast = useToast()
 
 const userStore = useUserStore()
 const {
-  user_info: { id: localLeaderId },
+  user_info: { id: localLeaderId, avatar: userAvatar, nickname: userNickname },
 } = userStore.userInfo
 
 const form = ref()
@@ -229,8 +231,8 @@ const leaderId = ref()
 const basePrice = ref(0) // 队伍基础费用
 const insuranceList = ref([]) // 保险列表
 const loading = ref(false)
-const teamDetail = ref(null) // 新增：队伍详情数据
-const selectedDriverId = ref(null) // 新增：选中的司机ID
+const teamDetail = ref(null) // 队伍详情数据
+const selectedDriverId = ref(null) // 选中的司机ID
 
 // 选中的保险信息（默认值）
 const selectedInsurance = ref({
@@ -245,7 +247,7 @@ const model = reactive({
   name: '',
   id_card: '',
   phone: '',
-  is_driver: false, // 修改默认值为false
+  is_driver: false,
   car_seat_count: '',
   license_plate: '',
   emergency_contact: '',
@@ -253,22 +255,69 @@ const model = reactive({
   fileList1: [],
   fileList2: [],
   read: false,
-  driver_id: null, // 新增：选中的司机ID
+  driver_id: null,
 })
 
-// 计算属性：获取队伍中的司机列表
-const teamDrivers = computed(() => {
+// 计算活动天数
+const activityDays = computed(() => {
+  if (!teamDetail.value?.start_time || !teamDetail.value?.end_time) {
+    return 1 // 默认1天
+  }
+
+  // 创建日期对象，只考虑日期部分，忽略时分秒
+  const startDate = new Date(teamDetail.value.start_time)
+  const endDate = new Date(teamDetail.value.end_time)
+
+  // 将时间设置为当天的00:00:00，确保只比较日期
+  const startDateOnly = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate())
+  const endDateOnly = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate())
+
+  // 计算日期差值（毫秒）
+  const timeDiff = endDateOnly - startDateOnly
+
+  // 转换为天数差值
+  const daysDiff = timeDiff / (1000 * 60 * 60 * 24)
+
+  // 跨几天就是几+1天，比如：
+  // 同一天: 2025-06-08 到 2025-06-08 = 0天差值 = 1天活动
+  // 跨1天: 2025-06-08 到 2025-06-09 = 1天差值 = 2天活动
+  // 跨2天: 2025-06-08 到 2025-06-10 = 2天差值 = 3天活动
+  return daysDiff + 1
+})
+
+// 计算总价格（活动天数 × 保险费用）
+const totalPrice = computed(() => {
+  const insuranceTotal = parseFloat(selectedInsurance.value.price) * activityDays.value
+  return (parseFloat(basePrice.value) + insuranceTotal).toFixed(2)
+})
+
+// 计算属性：获取队伍中的司机列表，并正确显示乘客信息
+const processedDrivers = computed(() => {
   if (!teamDetail.value?.members_info) return []
 
   const currentUserId = localLeaderId
 
   return teamDetail.value.members_info
-    .filter((member) => member.is_driver && +member.driver_review_status === 1) // 只显示审核通过的司机
+    .filter((member) => member.is_driver && +member.driver_review_status === 1)
     .map((driver) => {
       const isCurrentUserCar = driver.user_info?.id === currentUserId
-      const isCurrentUserPassenger = driver.car_passengers?.some(
-        (passenger) => passenger.user_info.id === currentUserId,
-      )
+
+      // 检查当前用户是否已选择这辆车
+      const isCurrentUserPassenger = selectedDriverId.value === driver.id
+
+      // 构建乘客列表，如果当前用户选择了这辆车，则加入当前用户信息
+      const carPassengers = [...(driver.car_passengers || [])]
+
+      if (isCurrentUserPassenger && !carPassengers.some((p) => p.user_info?.id === currentUserId)) {
+        // 添加当前用户到乘客列表
+        carPassengers.push({
+          user_info: {
+            id: currentUserId,
+            avatar: userAvatar || 'https://temp.im/40x40',
+            nickname: userNickname || '我',
+          },
+        })
+      }
 
       return {
         id: driver.id,
@@ -278,19 +327,13 @@ const teamDrivers = computed(() => {
         license_plate: driver.license_plate || '未知车牌',
         pickup_location: driver.pickup_location || '待确定上车点',
         car_seat_count: driver.car_seat_count || 4,
-        car_passengers: driver.car_passengers || [],
+        car_passengers: carPassengers,
         driver_review_status: driver.driver_review_status || 1,
         is_current_user_car: isCurrentUserCar,
         is_current_user_passenger: isCurrentUserPassenger,
-        // 保留原始数据
         originalData: driver,
       }
     })
-})
-
-// 计算总价格（基础费用 + 保险费用）
-const totalPrice = computed(() => {
-  return (parseFloat(basePrice.value) + parseFloat(selectedInsurance.value.price)).toFixed(2)
 })
 
 const getRules = () => ({
@@ -319,12 +362,20 @@ const handleInsuranceChange = (insuranceData) => {
   selectedInsurance.value = insuranceData
 }
 
-// 新增：处理选择司机车辆
+// 处理选择司机车辆
 const handleSelectDriver = (driverData) => {
   console.log('选择司机车辆:', driverData)
   selectedDriverId.value = driverData.id
   model.driver_id = driverData.id
   toast.show(`已选择${driverData.name}的车辆`)
+}
+
+// 处理退出车辆
+const handleExitCar = (driverData) => {
+  console.log('退出车辆:', driverData)
+  selectedDriverId.value = null
+  model.driver_id = null
+  toast.show(`已退出${driverData.name}的车辆`)
 }
 
 const { run: joinTeam } = useRequest((e) => httpPost('/api/pay', e))
@@ -333,13 +384,13 @@ const { run: getInsuranceList } = useRequest((e) => httpGet('/api/insurance_list
 const { run: getOpenid } = useRequest((e) => httpPost('/api/get_openid', e))
 const { run: getUserInfo } = useRequest(() => httpGet('/api/get_user'))
 const { run: getTeamDetail } = useRequest((e) => httpGet(`/api/team/user/detail/${e.id}`))
+
 // 获取并填充用户信息
 const fetchAndFillUserInfo = async () => {
   try {
     const userInfo = await getUserInfo()
 
     if (userInfo) {
-      // 映射用户信息到表单字段
       if (userInfo.real_name) {
         model.name = userInfo.real_name
       }
@@ -363,7 +414,7 @@ const fetchAndFillUserInfo = async () => {
   }
 }
 
-// 新增：获取队伍详情
+// 获取队伍详情
 const fetchTeamDetail = async (teamId) => {
   try {
     const data = await getTeamDetail({ id: teamId })
@@ -381,7 +432,6 @@ const fetchInsuranceList = async () => {
     insuranceList.value = data?.list || []
     console.log('获取到的保险列表:', insuranceList.value)
 
-    // 如果有保险数据，设置默认选中第一个
     if (insuranceList.value.length > 0) {
       const firstInsurance = insuranceList.value[0]
       selectedInsurance.value = {
@@ -389,7 +439,7 @@ const fetchInsuranceList = async () => {
         type: firstInsurance.id.toString(),
         name: firstInsurance.name,
         price: parseFloat(firstInsurance.price),
-        coverage: parseFloat(firstInsurance.hurt_coverage) / 10000, // 转换为万元
+        coverage: parseFloat(firstInsurance.hurt_coverage) / 10000,
         features: firstInsurance.description ? [firstInsurance.description] : [],
         description: firstInsurance.description,
         originalPrice: parseFloat(firstInsurance.original_price || firstInsurance.price),
@@ -425,12 +475,7 @@ onLoad(async (options) => {
     console.log(tempOpenid)
     openid.value = tempOpenid
 
-    // 并行执行获取保险列表、用户信息和队伍详情
-    await Promise.all([
-      fetchInsuranceList(),
-      fetchAndFillUserInfo(),
-      fetchTeamDetail(id.value), // 新增：获取队伍详情
-    ])
+    await Promise.all([fetchInsuranceList(), fetchAndFillUserInfo(), fetchTeamDetail(id.value)])
   } catch (error) {
     console.error('初始化失败:', error)
     toast.show('初始化失败，请重试')
@@ -452,7 +497,7 @@ const handleSubmit = async () => {
       toast.show('请上传行驶证/驾驶证')
       return
     }
-    // 手动校验车牌号格式
+
     if (model.is_driver && !/^[\u4e00-\u9fa5]{1}[A-Z]{1}[A-Z0-9]{5}$/.test(model.license_plate)) {
       toast.show('请输入正确的车牌号，例如：渝A12345')
       return
@@ -466,7 +511,6 @@ const handleSubmit = async () => {
       privacy_agreement: model.read,
     }
 
-    // 如果是车主，添加车辆照片
     if (model.is_driver) {
       submitData.car_photo = `${JSON.parse(model.fileList1[0].response).data},${JSON.parse(model.fileList2[0].response).data}`
     }
@@ -564,12 +608,10 @@ const onDeleteCar = () => {
   overflow-x: hidden;
 }
 
-// 新增：司机容器样式
 .drivers-container {
   padding: 0 20rpx;
 }
 
-// 保险信息显示样式
 .insurance-info {
   margin: 20rpx 0;
   padding: 20rpx;
