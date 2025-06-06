@@ -110,7 +110,7 @@
           label="车牌号"
           type="number"
           label-width="100px"
-          :maxlength="20"
+          :maxlength="8"
           prop="license_plate"
           disabled
           v-model="model.license_plate"
@@ -343,8 +343,20 @@ const processedDrivers = computed(() => {
 
 const getRules = () => ({
   name: [{ required: true, message: '请输入姓名' }],
-  id_card: [{ required: true, message: '请输入身份证号' }],
-  phone: [{ required: true, message: '请输入手机号' }],
+  id_card: [
+    { required: true, message: '请输入身份证号' },
+    {
+      pattern: /^[1-9]\d{5}(18|19|20|21)\d{2}(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])\d{3}[\dXx]$/,
+      message: '身份证号格式不正确',
+    },
+  ],
+  phone: [
+    { required: true, message: '请输入手机号' },
+    {
+      pattern: /^1[3-9]\d{9}$/,
+      message: '手机号格式不正确',
+    },
+  ],
   emergency_contact: [{ required: true, message: '请输入紧急联系人姓名' }],
   emergency_contact_phone: [{ required: true, message: '请输入紧急联系人电话' }],
   license_plate: [

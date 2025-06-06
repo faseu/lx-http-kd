@@ -166,7 +166,10 @@ const getRules = () => ({
   ],
   id_card_number: [
     { required: true, message: '请输入身份证号码' },
-    { pattern: /(^\d{15}$)|(^\d{18}$)|(^\d{17}(\d|X|x)$)/, message: '请输入有效的身份证号码' },
+    {
+      pattern: /^[1-9]\d{5}(18|19|20|21)\d{2}(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])\d{3}[\dXx]$/,
+      message: '身份证号格式不正确',
+    },
   ],
   phone_number: [
     { required: true, message: '请输入联系电话' },

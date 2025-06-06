@@ -1,5 +1,5 @@
 <template>
-  <view class="activity-item" @click="goToTeamDetail(item.id)">
+  <view class="activity-item" @click.stop="goToTeamDetail(item.id)">
     <!-- 活动名称和状态 -->
     <view class="header">
       <view class="activity-name">{{ item.team_name || '未知活动' }}</view>
@@ -59,28 +59,34 @@
     </view>
 
     <!-- 操作区 -->
-    <view class="actions-row" @click.stop="">
+    <view class="actions-row" @click.stop>
       <!-- 队长操作 -->
       <template v-if="isLeader">
         <!-- 审核中状态 -->
         <template v-if="item.status !== 'reviewing'">
-          <view class="action-btn cancel-btn" @click="handleCancelActivity">取消活动</view>
+          <view class="action-btn cancel-btn" @click.stop="handleCancelActivity">取消活动</view>
         </template>
 
         <!-- 审核不通过 -->
         <template v-else-if="item.status === 'rejected'">
-          <view class="action-btn cancel-btn" @click="handleCancelActivity">取消活动</view>
-          <view class="action-btn edit-btn" @click="handleEditActivity">编辑</view>
+          <view class="action-btn cancel-btn" @click.stop="handleCancelActivity">取消活动</view>
+          <view class="action-btn edit-btn" @click.stop="handleEditActivity">编辑</view>
         </template>
 
         <!-- 组团中 -->
         <template v-else-if="item.status === 'recruiting'">
-          <view class="action-btn cancel-btn" @click="handleCancelActivity">取消活动</view>
-          <view class="action-btn join-btn" @click="handleJoinActivity">报名</view>
-          <view v-if="isCurrentUserJoined" class="action-btn quit-btn" @click="handleQuitActivity">
+          <view class="action-btn cancel-btn" @click.stop="handleCancelActivity">取消活动</view>
+          <view class="action-btn join-btn" @click.stop="handleJoinActivity">报名</view>
+          <view
+            v-if="isCurrentUserJoined"
+            class="action-btn quit-btn"
+            @click.stop="handleQuitActivity"
+          >
             取消报名
           </view>
-          <view v-if="canFormTeam" class="action-btn form-btn" @click="handleFormTeam">成团</view>
+          <view v-if="canFormTeam" class="action-btn form-btn" @click.stop="handleFormTeam">
+            成团
+          </view>
         </template>
 
         <!-- 已封团：不显示操作按钮 -->
@@ -90,16 +96,17 @@
       <template v-else>
         <!-- 组团中且已报名 -->
         <template v-if="item.status === 'recruiting' && isCurrentUserJoined">
-          <view class="action-btn quit-btn" @click="handleQuitActivity">取消报名</view>
+          <view class="action-btn quit-btn" @click.stop="handleQuitActivity">取消报名</view>
         </template>
 
         <!-- 组团中且未报名 -->
         <template v-else-if="item.status === 'recruiting' && !isCurrentUserJoined">
-          <view class="action-btn join-btn" @click="handleJoinActivity">报名</view>
+          <view class="action-btn join-btn" @click.stop="handleJoinActivity">报名</view>
         </template>
 
         <!-- 已封团：不显示操作按钮 -->
       </template>
+      <wd-message-box />
     </view>
   </view>
 </template>
@@ -446,7 +453,6 @@ const handleFormTeam = () => {
   display: flex;
   justify-content: flex-end;
   gap: 16rpx;
-  margin-top: 20rpx;
   padding-top: 20rpx;
 
   .action-btn {

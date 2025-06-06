@@ -49,7 +49,12 @@
         <tabbar :selected="1" />
       </template>
     </z-paging>
-    <wd-fab :draggable="true" :expandable="false">
+    <wd-fab
+      :draggable="true"
+      :expandable="false"
+      :zIndex="9999"
+      :gap="{ top: 16, left: 16, right: 16, bottom: 116 }"
+    >
       <template #trigger>
         <view
           class="w-100rpx h-100rpx bg-[#3a93ff] flex justify-center items-center rounded-50%"
