@@ -43,12 +43,6 @@
       </view>
     </view>
 
-    <!-- 加载状态 -->
-    <view v-if="loading" class="flex justify-center items-center mt-100rpx">
-      <wd-loading type="spinner" />
-      <text class="ml-20rpx">加载中...</text>
-    </view>
-
     <!-- 保险列表 -->
     <view class="file-list">
       <view
