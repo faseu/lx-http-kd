@@ -55,7 +55,7 @@
         v-for="(file, index) in fileList"
         :key="index"
         class="file-item"
-        @click="openPdfFile(file)"
+        @click="previewPDF(file)"
       >
         <view class="file-icon">
           <wd-icon name="file-pdf" size="40rpx" color="#FF4D4F" />
@@ -70,7 +70,7 @@
     </view>
 
     <!-- 空状态 -->
-    <view v-if="fileList.length === 0" class="empty-state">
+    <view v-if="!loading && fileList.length === 0" class="empty-state">
       <wd-icon name="file-text" size="100rpx" color="#C8C9CC" />
       <view class="empty-text">暂无保险条款文件</view>
     </view>
@@ -81,13 +81,17 @@
       <text class="tip-text">点击文件即可查看详细内容</text>
     </view>
 
-    <!-- 加载提示 -->
-    <wd-loading v-if="loading" type="spinner" />
+    <!-- 全局loading -->
+    <wd-loading
+      v-if="loading"
+      type="spinner"
+      custom-style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 9999;"
+    />
   </view>
 </template>
 
 <script lang="js" setup>
-import { ref, onMounted } from 'vue'
+import { ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { useToast } from 'wot-design-uni'
 
@@ -124,77 +128,80 @@ onLoad((options) => {
   })
 })
 
-// 打开PDF文件
-const openPdfFile = async (file) => {
-  if (!file.file_url) {
-    toast.show('文件链接无效')
+// 预览PDF文件 - 参考您提供的代码风格
+const previewPDF = (file) => {
+  const pdfUrl = file.file_url
+
+  if (!pdfUrl) {
+    uni.showToast({
+      title: 'PDF文件链接不存在',
+      icon: 'none',
+    })
     return
   }
 
   loading.value = true
   toast.show('正在加载文件...')
 
-  try {
-    // 下载文件
-    const downloadResult = await uni.downloadFile({
-      url: file.file_url,
-      timeout: 30000, // 30秒超时
-    })
+  uni.downloadFile({
+    url: pdfUrl,
+    timeout: 30000, // 30秒超时
+    success: (res) => {
+      loading.value = false
 
-    loading.value = false
-
-    if (downloadResult[1].statusCode === 200) {
-      // 文件下载成功，打开文件
-      uni.openDocument({
-        filePath: downloadResult[1].tempFilePath,
-        showMenu: true,
-        success: () => {
-          console.log('PDF文件打开成功')
-          toast.show('文件打开成功')
-        },
-        fail: (err) => {
-          console.error('PDF文件打开失败:', err)
-          handleFileOpenError(err, file)
-        },
-      })
-    } else {
-      console.error('文件下载失败, 状态码:', downloadResult[1].statusCode)
-      toast.show(`文件下载失败，状态码: ${downloadResult[1].statusCode}`)
-    }
-  } catch (error) {
-    loading.value = false
-    console.error('下载文件时发生错误:', error)
-    handleDownloadError(error, file)
-  }
+      if (res.statusCode === 200) {
+        uni.openDocument({
+          filePath: res.tempFilePath,
+          fileType: 'pdf',
+          success: () => {
+            console.log('PDF预览成功')
+            toast.show('文件打开成功')
+          },
+          fail: (err) => {
+            console.error('PDF预览失败', err)
+            handleFileOpenError(err, file)
+          },
+        })
+      } else {
+        console.error('文件下载失败, 状态码:', res.statusCode)
+        uni.showToast({
+          title: `文件下载失败，状态码: ${res.statusCode}`,
+          icon: 'none',
+        })
+      }
+    },
+    fail: (err) => {
+      loading.value = false
+      console.error('文件下载失败', err)
+      handleDownloadError(err, file)
+    },
+  })
 }
 
 // 处理文件打开失败
 const handleFileOpenError = (error, file) => {
   console.error('文件打开失败详情:', error)
 
-  // 尝试其他打开方式
   uni.showModal({
-    title: '文件打开失败',
+    title: 'PDF文件打开失败',
     content: '是否尝试在浏览器中打开？',
     showCancel: true,
     confirmText: '在浏览器打开',
-    cancelText: '取消',
+    cancelText: '复制链接',
     success: (res) => {
       if (res.confirm) {
-        // 在系统浏览器中打开
+        // 尝试在系统浏览器中打开
         uni.openDocument({
           filePath: file.file_url,
           showMenu: true,
           fail: () => {
             // 最后尝试：复制链接到剪贴板
-            uni.setClipboardData({
-              data: file.file_url,
-              success: () => {
-                toast.show('文件链接已复制到剪贴板')
-              },
-            })
+            copyToClipboard(file.file_url)
           },
         })
+      } else {
+        // 复制链接到剪贴板
+        copyToClipboard(file.file_url)
       }
     },
   })
@@ -221,16 +228,30 @@ const handleDownloadError = (error, file) => {
     success: (res) => {
       if (res.confirm) {
         // 重试下载
-        openPdfFile(file)
+        previewPDF(file)
       } else {
         // 复制链接到剪贴板
-        uni.setClipboardData({
-          data: file.file_url,
-          success: () => {
-            toast.show('文件链接已复制到剪贴板')
-          },
-        })
+        copyToClipboard(file.file_url)
       }
+    },
+  })
+}
+
+// 复制链接到剪贴板
+const copyToClipboard = (url) => {
+  uni.setClipboardData({
+    data: url,
+    success: () => {
+      uni.showToast({
+        title: '文件链接已复制到剪贴板',
+        icon: 'none',
+      })
+    },
+    fail: () => {
+      uni.showToast({
+        title: '复制失败',
+        icon: 'none',
+      })
     },
   })
 }
@@ -283,9 +304,6 @@ const goBack = () => {
     box-sizing: border-box;
     margin-bottom: 20rpx;
     box-shadow: 0 2rpx 20rpx rgba(0, 0, 0, 0.08);
-    transition:
-      transform 0.2s ease,
-      box-shadow 0.2s ease;
 
     &:last-child {
       margin-bottom: 0;
@@ -349,13 +367,6 @@ const goBack = () => {
 :deep() {
   .wd-navbar.is-border::after {
     display: none;
-  }
-  .wd-loading {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    z-index: 9999;
   }
 }
 </style>
