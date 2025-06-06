@@ -169,6 +169,13 @@
       }
     },
     {
+      "path": "pages/myActivity/index",
+      "type": "page",
+      "style": {
+        "navigationBarTitleText": "我的活动"
+      }
+    },
+    {
       "path": "pages/publish/index",
       "type": "page",
       "style": {

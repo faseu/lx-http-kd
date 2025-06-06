@@ -156,14 +156,14 @@ const myCreatedActivities = ref([])
 const myJoinedActivities = ref([])
 
 const { run: runGetMyActivities } = useRequest((e) =>
-  httpGet('/api/activity/team/my_teams', {
+  httpGet('/api/team/my_teams', {
     page: 1,
     page_size: 1000,
   }),
 )
 
 onShow(async () => {
-  const rawActivities = await runGetMyActivities()
+  const { list: rawActivities } = await runGetMyActivities()
   let processedActivities = []
 
   if (Array.isArray(rawActivities)) {

@@ -81,7 +81,7 @@ const contentList = ref([
   {
     name: '我的活动',
     iconUrl: '/static/images/mine/btn-1.png',
-    linkUrl: '/pages/mine/myActivity',
+    linkUrl: '/pages/myActivity/index',
   },
   {
     name: '我的收藏',

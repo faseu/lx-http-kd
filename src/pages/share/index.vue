@@ -41,7 +41,7 @@
 
       <!-- 精彩瞬间内容 -->
       <view class="moments-container">
-        <WaterfallMoments :dataList="dataList" />
+        <WaterfallMoments :dataList="dataList" @itemClick="toDetail" />
       </view>
 
       <template #bottom>
@@ -123,6 +123,7 @@ const sentLikeRequest = async (e) => {
 }
 
 const toDetail = (e) => {
+  console.log(e)
   uni.navigateTo({
     url: `/pages/share/detail?id=${e.id}`,
   })

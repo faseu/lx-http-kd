@@ -49,7 +49,7 @@
             v-for="(item, index) in wsStore.groups"
             :title="item.group_name"
             :value="formatChatTime(item.last_active)"
-            :label="item.last_message.content"
+            :label="item.last_message?.content"
             :key="item.group_id"
             is-link
             @click="goToChatRoom(item.group_id)"
@@ -96,8 +96,8 @@ const handleJoinChat = () => {
 onShow(async () => {
   uni?.hideTabBar()
   if (token) {
-    // wsStore.initWebSocket(`ws://1.14.59.102:8000/ws/chat?token=${token}`)
-    // console.log(wsStore.groups)
+    wsStore.initWebSocket(`ws://1.14.59.102:8000/ws/chat?token=${token}`)
+    console.log(wsStore.groups)
   }
 })
 

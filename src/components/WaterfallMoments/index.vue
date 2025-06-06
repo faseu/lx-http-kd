@@ -459,6 +459,7 @@ const formatCount = (count) => {
 
 // 点击事件
 const onItemClick = (item) => {
+  console.log(item)
   emit('itemClick', item)
 }
 

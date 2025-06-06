@@ -19,6 +19,7 @@ interface NavigateToOptions {
        "/pages/mine/myAblum" |
        "/pages/mine/myActivity" |
        "/pages/mine/myCollect" |
+       "/pages/myActivity/index" |
        "/pages/publish/index" |
        "/pages/search/index" |
        "/pages/settings/index" |
