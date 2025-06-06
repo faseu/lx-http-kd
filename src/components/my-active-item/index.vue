@@ -115,6 +115,7 @@
 import { computed } from 'vue'
 import { useUserStore } from '@/store'
 import { useMessage, useToast } from 'wot-design-uni'
+import { httpPost } from '@/utils/http'
 
 const userStore = useUserStore()
 const message = useMessage()
@@ -222,7 +223,7 @@ const goToTeamDetail = (id) => {
 }
 
 // 取消活动
-const handleCancelActivity = () => {
+const handleCancelActivity = async () => {
   message
     .confirm({
       msg: '确定要取消这个活动吗？取消后无法恢复。',
@@ -230,8 +231,15 @@ const handleCancelActivity = () => {
       confirmButtonText: '确定取消',
       cancelButtonText: '我再想想',
     })
-    .then(() => {
-      // TODO: 调用取消活动接口
+    .then(async () => {
+      uni.showLoading({ title: '处理中...' })
+
+      await httpPost('/api/team/delete', {
+        team_id: props?.item?.id,
+      })
+
+      uni.hideLoading()
+
       toast.show('活动已取消')
       emit('refresh')
     })
