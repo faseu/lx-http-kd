@@ -444,12 +444,13 @@ const handleFormTeam = () => {
 
 .actions-row {
   display: flex;
+  justify-content: flex-end;
   gap: 16rpx;
   margin-top: 20rpx;
   padding-top: 20rpx;
 
   .action-btn {
-    padding: 12rpx 24rpx;
+    padding: 8rpx 18rpx;
     border-radius: 24rpx;
     font-size: 24rpx;
     text-align: center;
