@@ -28,14 +28,14 @@
       @click-left="goBack"
     />
     <view class="w-full">
-      <view class="pos-relative h-88rpx inline-block h-full mt-40rpx ml-32rpx">
+      <view class="pos-relative h-88rpx inline-block mt-40rpx ml-32rpx">
         <wd-img
           mode="aspectFill"
           custom-style="position: absolute !important;"
           custom-class="pos-absolute right-52rpx bottom-0 w-184rpx h-46rpx"
           src="/static/images/userSettings/decoration.png"
         />
-        <view class="font-900 text-72rpx h-full leading-86rpx pos-relative">保险条款</view>
+        <view class="font-900 text-72rpx leading-86rpx pos-relative">保险条款</view>
       </view>
       <view class="pos-relative mt-20rpx ml-36rpx text-28rpx color-[#666]">
         <view>以下为保险产品介绍、可一</view>
@@ -62,10 +62,6 @@
         </view>
         <view class="file-info">
           <view class="file-name">{{ file.file_name || `保险条款${index + 1}.pdf` }}</view>
-          <view class="file-meta">
-            <text class="file-type">PDF文档</text>
-            <text class="file-action">点击查看</text>
-          </view>
         </view>
         <view class="file-arrow">
           <wd-icon name="arrow-right" size="32rpx" color="#C8C9CC" />
@@ -251,6 +247,9 @@ const goBack = () => {
   height: 100vh;
   font-size: 24rpx;
   color: #333333;
+  padding: 0 20rpx;
+  display: flex;
+  flex-direction: column;
 
   .bg_box {
     position: absolute;
@@ -265,8 +264,11 @@ const goBack = () => {
   }
 
   .file-list {
+    flex: 1;
+    margin-top: 20rpx;
     position: relative;
     padding: 20rpx 30rpx;
+    box-sizing: border-box;
     width: 100%;
     border-radius: 20rpx;
     background: linear-gradient(to bottom, #d9f5fd 76%, #ffffff 100%);
@@ -275,19 +277,15 @@ const goBack = () => {
   .file-item {
     display: flex;
     align-items: center;
-    background: white;
+    background: #f2f8fa;
     border-radius: 16rpx;
     padding: 30rpx 24rpx;
+    box-sizing: border-box;
     margin-bottom: 20rpx;
     box-shadow: 0 2rpx 20rpx rgba(0, 0, 0, 0.08);
     transition:
       transform 0.2s ease,
       box-shadow 0.2s ease;
-
-    &:active {
-      transform: scale(0.98);
-      box-shadow: 0 4rpx 30rpx rgba(0, 0, 0, 0.12);
-    }
 
     &:last-child {
       margin-bottom: 0;
@@ -295,9 +293,8 @@ const goBack = () => {
   }
 
   .file-icon {
-    width: 80rpx;
-    height: 80rpx;
-    background: #fff2f2;
+    width: 60rpx;
+    height: 60rpx;
     border-radius: 16rpx;
     display: flex;
     align-items: center;
@@ -311,29 +308,9 @@ const goBack = () => {
     .file-name {
       font-size: 32rpx;
       font-weight: 500;
-      color: #1f2937;
+      color: #586b93;
       margin-bottom: 8rpx;
       line-height: 1.4;
-    }
-
-    .file-meta {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-
-      .file-type {
-        font-size: 24rpx;
-        color: #6b7280;
-        background: #f3f4f6;
-        padding: 4rpx 12rpx;
-        border-radius: 8rpx;
-      }
-
-      .file-action {
-        font-size: 24rpx;
-        color: #3b82f6;
-        font-weight: 500;
-      }
     }
   }
 
