@@ -59,6 +59,14 @@
       }
     },
     {
+      "path": "pages/addShare/index",
+      "type": "page",
+      "style": {
+        "navigationBarTitleText": "发布精彩瞬间",
+        "navigationBarBackgroundColor": "#ffffff"
+      }
+    },
+    {
       "path": "pages/applyDriver/index",
       "type": "page",
       "style": {
@@ -71,29 +79,6 @@
       "type": "page",
       "style": {
         "navigationBarTitleText": "聊天室"
-      }
-    },
-    {
-      "path": "pages/homePage/activityDetail",
-      "type": "page",
-      "style": {
-        "navigationStyle": "custom"
-      }
-    },
-    {
-      "path": "pages/homePage/goHiking",
-      "type": "page",
-      "style": {
-        "navigationBarTitleText": "",
-        "navigationBarBackgroundColor": "#fff"
-      }
-    },
-    {
-      "path": "pages/homePage/index",
-      "type": "page",
-      "style": {
-        "navigationStyle": "custom",
-        "navigationBarTitleText": "homePage"
       }
     },
     {
@@ -227,13 +212,6 @@
       "style": {
         "navigationStyle": "custom",
         "navigationBarTitleText": "用户设置"
-      }
-    },
-    {
-      "path": "pages/withTeam/teamDetail",
-      "type": "page",
-      "style": {
-        "navigationBarTitleText": "队伍详情"
       }
     }
   ],

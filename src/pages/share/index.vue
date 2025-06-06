@@ -49,6 +49,16 @@
         <tabbar :selected="1" />
       </template>
     </z-paging>
+    <wd-fab :draggable="true" :expandable="false">
+      <template #trigger>
+        <view
+          class="w-100rpx h-100rpx bg-[#3a93ff] flex justify-center items-center rounded-50%"
+          @click="goToAddShare"
+        >
+          <wd-icon name="add" size="20px" color="#fff" />
+        </view>
+      </template>
+    </wd-fab>
   </view>
 </template>
 
@@ -127,6 +137,10 @@ const toDetail = (e) => {
   uni.navigateTo({
     url: `/pages/share/detail?id=${e.id}`,
   })
+}
+
+const goToAddShare = (id) => {
+  uni.navigateTo({ url: `/pages/addShare/index` })
 }
 </script>
 

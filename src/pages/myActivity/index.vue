@@ -47,8 +47,8 @@
         </view>
       </template>
       <view class="h-full" v-if="tab === 0">
-        <view v-for="item in dataList" :key="item.id">
-          <activeItem :item="item" />
+        <view class="content-box" v-for="item in dataList" :key="item.id">
+          <MyActivityItem :item="item" @refresh="handleRefresh" />
         </view>
       </view>
     </z-paging>
@@ -56,7 +56,7 @@
 </template>
 
 <script lang="js" setup>
-import activeItem from '@/components/active-item/index.vue'
+import MyActivityItem from '@/components/my-active-item/index.vue'
 import { onShow } from '@dcloudio/uni-app'
 import { ref } from 'vue'
 import { getIsTabbar } from '@/utils'
@@ -96,6 +96,8 @@ const queryList = async (pageNo, pageSize) => {
   const { list } = await runGetActivityList(queryParams)
   paging.value.complete(list)
 }
+
+const handleRefresh = () => {}
 </script>
 
 <style scoped lang="scss">

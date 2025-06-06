@@ -5,11 +5,9 @@
 
 interface NavigateToOptions {
   url: "/pages/home/index" |
+       "/pages/addShare/index" |
        "/pages/applyDriver/index" |
        "/pages/chatRoom/index" |
-       "/pages/homePage/activityDetail" |
-       "/pages/homePage/goHiking" |
-       "/pages/homePage/index" |
        "/pages/insuranceDetail/index" |
        "/pages/insurancePDF/index" |
        "/pages/joinTeam/index" |
@@ -27,7 +25,6 @@ interface NavigateToOptions {
        "/pages/share/index" |
        "/pages/teamDetail/index" |
        "/pages/userSettings/index" |
-       "/pages/withTeam/teamDetail" |
        "/pages-sub/demo/index";
 }
 interface RedirectToOptions extends NavigateToOptions {}
