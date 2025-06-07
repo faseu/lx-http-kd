@@ -75,9 +75,7 @@ const dataList = ref([])
 
 const tab = ref(0) // 默认选中活动tab
 onShow(async () => {
-  if (getIsTabbar()) {
-    uni?.hideTabBar()
-  }
+  paging?.value?.reload()
 })
 
 const changeTab = (value) => {

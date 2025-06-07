@@ -40,9 +40,9 @@
           </view>
           <view v-if="remainingCount > 0" class="more-count">+{{ remainingCount }}</view>
         </view>
-        <view class="member-count">
-          {{ item.members_info?.length || 0 }}/{{ item.max_participants }}人
-        </view>
+        <!--        <view class="member-count">-->
+        <!--          {{ item.members_info?.length || 0 }}/{{ item.max_participants }}人-->
+        <!--        </view>-->
       </view>
     </view>
 
@@ -76,7 +76,13 @@
         <!-- 组团中 -->
         <template v-else-if="item.status === 'recruiting'">
           <view class="action-btn cancel-btn" @click.stop="handleCancelActivity">取消活动</view>
-          <view class="action-btn join-btn" @click.stop="handleJoinActivity">报名</view>
+          <view
+            v-if="!isCurrentUserJoined"
+            class="action-btn join-btn"
+            @click.stop="handleJoinActivity"
+          >
+            报名
+          </view>
           <view
             v-if="isCurrentUserJoined"
             class="action-btn quit-btn"
@@ -150,7 +156,11 @@ const isLeader = computed(() => {
 // 当前用户是否已报名
 const isCurrentUserJoined = computed(() => {
   const currentUserId = getCurrentUserId()
-  return props.item.members_info?.some((member) => member.user_info?.id === currentUserId) || false
+  return (
+    props.item.members_info
+      ?.filter((item) => item.join_status === 1)
+      ?.some((member) => member.user_info?.id === currentUserId) || false
+  )
 })
 
 // 是否可以成团（人数达到要求）
@@ -251,7 +261,7 @@ const handleCancelActivity = async () => {
 // 编辑活动
 const handleEditActivity = () => {
   uni.navigateTo({
-    url: `/pages/publish/index?id=${props.item.id}&mode=edit`,
+    url: `/pages/publish/index?editId=${props.item.id}`,
   })
 }
 
@@ -269,8 +279,16 @@ const handleQuitActivity = () => {
       msg: '确定要取消报名吗？',
       title: '确认取消报名',
     })
-    .then(() => {
+    .then(async () => {
       // TODO: 调用取消报名接口
+      uni.showLoading({ title: '处理中...' })
+
+      await httpPost('/api/pay/refund', {
+        team_id: props?.item?.id,
+      })
+
+      uni.hideLoading()
+
       toast.show('已取消报名')
       emit('refresh')
     })
@@ -286,8 +304,13 @@ const handleFormTeam = () => {
       msg: '确定要成团吗？成团后将不再接受新的报名。',
       title: '确认成团',
     })
-    .then(() => {
-      // TODO: 调用成团接口
+    .then(async () => {
+      uni.showLoading({ title: '处理中...' })
+
+      await httpPost('/api/team_over', {
+        team_id: props?.item?.id,
+      })
+      uni.hideLoading()
       toast.show('成团成功')
       emit('refresh')
     })

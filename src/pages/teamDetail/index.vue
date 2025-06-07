@@ -130,7 +130,7 @@
             }}
           </view>
           <view class="text-20rpx color-[#999] mt-4rpx">
-            联系方式：{{ maskPhone(teamDetail?.phone) }}（未报名不可见）
+            联系方式：{{ maskPhone(teamDetail?.phone) }}
           </view>
         </view>
         <view
@@ -153,7 +153,7 @@
               {{
                 teamDetail?.is_full
                   ? '已满员'
-                  : `仅剩${(teamDetail?.max_participants || 0) - (teamDetail?.members_info?.length || 0)}个名额`
+                  : `仅剩${(teamDetail?.max_participants || 0) - (teamDetail?.members_info?.filter((item) => item.join_status === 1)?.length || 0)}个名额`
               }}
             </view>
             <wd-icon name="arrow-right" color="#FF665A" size="32rpx"></wd-icon>
@@ -161,7 +161,9 @@
         </view>
         <view class="flex mt-16rpx w-full gap-56rpx">
           <image
-            v-for="(member, index) in teamDetail?.members_info?.slice(0, 6)"
+            v-for="(member, index) in teamDetail?.members_info
+              ?.filter((item) => item.join_status === 1)
+              ?.slice(0, 6)"
             :key="index"
             class="w-60rpx h-60rpx rounded-[50%]"
             :src="member?.user_info?.avatar || 'https://temp.im/60x60'"
@@ -353,7 +355,7 @@
 import { httpGet, httpPost } from '@/utils/http'
 import driverItem from '@/components/driver-item/index.vue'
 import { onLoad, onShow } from '@dcloudio/uni-app'
-import { ref, computed, reactive } from 'vue'
+import { computed, ref } from 'vue'
 import { useUserStore } from '@/store'
 import { useMessage, useToast } from 'wot-design-uni'
 
@@ -602,7 +604,7 @@ const reviewDriver = async (participantId, reviewStatus) => {
 
 // 修改报名按钮的点击逻辑
 const handleJoinButtonClick = () => {
-  if (teamDetail.value?.is_member) {
+  if (isCurrentUserJoined.value) {
     // 已经是成员，执行退出操作
     exitTeam()
   } else if (teamDetail.value?.is_full) {
@@ -617,9 +619,19 @@ const handleJoinButtonClick = () => {
   }
 }
 
+// 当前用户是否已报名
+const isCurrentUserJoined = computed(() => {
+  const currentUserId = getCurrentUserId()
+  return (
+    teamDetail.value?.members_info
+      ?.filter((item) => item.join_status === 1)
+      ?.some((member) => member.user_info?.id === currentUserId) || false
+  )
+})
+
 // 获取按钮文本
 const getButtonText = computed(() => {
-  if (teamDetail.value?.is_member) {
+  if (isCurrentUserJoined.value) {
     return '退出队伍'
   } else if (teamDetail.value?.is_full) {
     return '已满员'
@@ -630,7 +642,8 @@ const getButtonText = computed(() => {
 
 // 获取按钮状态
 const getButtonDisabled = computed(() => {
-  return teamDetail.value?.is_full && !teamDetail.value?.is_member
+  // return teamDetail.value?.is_full && !teamDetail.value?.is_member
+  return isCurrentUserJoined.value
 })
 
 // 在司机信息展示区域添加审核功能（仅创建者可见）

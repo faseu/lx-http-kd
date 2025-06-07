@@ -48,7 +48,12 @@
           <!--          >-->
           <!--            <image class="w-36rpx h-36rpx rounded-[50%]" src="https://temp.im/40x40" />-->
           <!--          </view>-->
-          <block v-for="(member, index) in item.members_info?.slice(0, 3)" :key="index">
+          <block
+            v-for="(member, index) in item.members_info
+              ?.filter((item) => item.join_status === 1)
+              ?.slice(0, 3)"
+            :key="index"
+          >
             <view
               class="flex justify-center items-center w-40rpx h-40rpx bg-white rounded-[50%] pos-absolute top-0"
               :style="{ left: `${index * 20}rpx`, zIndex: 10 - index }"
@@ -60,7 +65,11 @@
             </view>
           </block>
         </view>
-        <view>已有{{ item.members?.length || 0 }}人上车～</view>
+        <view>
+          已有{{
+            item?.members_info?.filter((item) => item.join_status === 1)?.length || 0
+          }}人上车～
+        </view>
       </view>
     </view>
   </view>

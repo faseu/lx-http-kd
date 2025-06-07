@@ -264,7 +264,7 @@
             @click="handleSubmit"
             block
           >
-            提交
+            {{ isEditing ? '更新' : '提交' }}
           </wd-button>
         </view>
         <wd-gap bg-color="#FFFFFF" safe-area-bottom height="0"></wd-gap>
@@ -290,61 +290,165 @@ import {
   hikingTypeList,
 } from '@/utils/config'
 import dayjs from 'dayjs'
+
 const id = ref(null)
+const editId = ref(null) // 编辑时的活动ID
+const isEditing = ref(false) // 是否为编辑模式
 const insuranceCost = ref('')
 const toast = useToast()
+
+const initialModel = {
+  title: '',
+  location: '',
+  start_time: '',
+  end_time: '',
+  hiking_type: '',
+  hiking_distance: '',
+  hiking_duration: '',
+  altitude_ascent: '',
+  peak_altitude: '',
+  is_car_required: true,
+  travel_method: '',
+  car_fee: '',
+  accommodation_fee: '',
+  insurance_cost: 10,
+  other_fee: '',
+  other_fee_introduced: '',
+  cost_method: '',
+  activity: '',
+  max_participants: '',
+  phone: '',
+  team_intro: '',
+  fileList: [],
+  equipment_info: {
+    backpack: [],
+    feet_body: [],
+    head: [],
+    lower_body: [],
+    upper_body: [],
+    equipment_other: '',
+  },
+}
+
+const model = reactive({ ...initialModel })
 const { data: activityList, run: getActivityList } = useRequest((e) =>
   httpGet('/api/activity/select_list', {
     page: 1,
     page_size: 1000,
   }),
 )
+
 const { run: createTeam } = useRequest((e) => httpPost('/api/join_team', e))
+const { run: updateTeam } = useRequest((e) => httpPost(`/api/edit_team`, e))
+const { run: getTeamDetail } = useRequest((e) => httpGet(`/api/team/user/detail/${e.id}`))
+
 onLoad(async (options) => {
-  // await getActivityList()
-  if (options.id) {
-    id.value = options.id
-    model.activity = Number(options.id)
-  }
-  if (options.insuranceCost) {
-    insuranceCost.value = options.insuranceCost
+  console.log('onLoad options:', options)
+
+  // 检查是否为编辑模式
+  if (options.editId) {
+    isEditing.value = true
+    editId.value = options.editId
+
+    // 设置导航栏标题为编辑
+    uni.setNavigationBarTitle({
+      title: '编辑活动',
+    })
+
+    // 获取活动详情并填充表单
+    await loadTeamDetailForEdit(options.editId)
+  } else {
+    // 新建模式的原有逻辑
+    if (options.id) {
+      id.value = options.id
+      model.activity = Number(options.id)
+    }
+    if (options.insuranceCost) {
+      insuranceCost.value = options.insuranceCost
+    }
   }
 })
-const initialModel = {
-  title: '活动名',
-  location: '不不不',
-  start_time: new Date().getTime(),
-  end_time: new Date().getTime(),
-  hiking_type: '休闲徒步',
-  hiking_distance: 12,
-  hiking_duration: 5,
-  altitude_ascent: 13,
-  peak_altitude: 15,
-  is_car_required: true,
-  travel_method: '拼车',
-  car_fee: 15,
-  accommodation_fee: 13,
-  insurance_cost: 10,
-  other_fee: 36,
-  other_fee_introduced: '45',
-  cost_method: 1,
-  activity: '',
-  max_participants: 1,
-  phone: '15711111111',
-  team_intro: '简介渐渐简介渐渐简介渐渐',
-  equipment_info: {
-    backpack: ['一次性雨衣', '洗漱用品', '防水袋'],
-    feet_body: ['登山杖', '羊毛袜', '登山鞋'],
-    head: ['头盔', '遮阳帽'],
-    lower_body: ['羽绒裤', '速干裤', '护具'],
-    upper_body: ['五点式安全带', '羽绒'],
-    equipment_other: '不敢杠',
-  },
+
+// 获取活动详情并填充表单
+const loadTeamDetailForEdit = async (teamId) => {
+  try {
+    uni.showLoading({ title: '加载中...' })
+
+    const data = await getTeamDetail({ id: teamId })
+    const teamDetail = JSON.parse(JSON.stringify(data.team_detail))
+
+    // 填充表单数据
+    fillFormWithTeamDetail(teamDetail)
+
+    uni.hideLoading()
+  } catch (error) {
+    uni.hideLoading()
+    console.error('获取活动详情失败:', error)
+    toast.show('获取活动详情失败')
+  }
 }
 
-const model = reactive({
-  ...initialModel,
-})
+// 将队伍详情数据填充到表单中
+const fillFormWithTeamDetail = (teamDetail) => {
+  const modelTemp = {}
+  // 基本信息
+  modelTemp.title = teamDetail.team_name || ''
+  modelTemp.team_intro = teamDetail.team_intro || ''
+  modelTemp.location = teamDetail.location || ''
+  modelTemp.phone = teamDetail.phone || ''
+
+  // 时间信息 - 将时间戳转换为Date对象
+  if (teamDetail.start_time) {
+    modelTemp.start_time = new Date(teamDetail.start_time).getTime()
+  }
+  if (teamDetail.end_time) {
+    modelTemp.end_time = new Date(teamDetail.end_time).getTime()
+  }
+
+  // 路线信息
+  modelTemp.hiking_type = teamDetail.hiking_type || '休闲徒步'
+  modelTemp.hiking_distance = parseFloat(teamDetail.hiking_distance) || 0
+  modelTemp.altitude_ascent = parseFloat(teamDetail.altitude_ascent) || 0
+  modelTemp.peak_altitude = parseFloat(teamDetail.peak_altitude) || 0
+  modelTemp.hiking_duration = parseFloat(teamDetail.hiking_duration) || 0
+
+  // 活动设置
+  modelTemp.max_participants = teamDetail.max_participants || 1
+  modelTemp.travel_method = teamDetail.travel_method || '拼车'
+  modelTemp.cost_method = teamDetail.cost_method || 1
+  modelTemp.is_car_required = teamDetail.is_car_required || true
+
+  // 费用信息
+  modelTemp.accommodation_fee = parseFloat(teamDetail.accommodation_fee) || 0
+  modelTemp.car_fee = parseFloat(teamDetail.car_fee) || 0
+  modelTemp.insurance_cost = parseFloat(teamDetail.insurance_price) || 0
+  modelTemp.other_fee = parseFloat(teamDetail.other_fee) || 0
+  modelTemp.other_fee_introduced = teamDetail.other_fee_introduced || ''
+
+  // 装备信息
+  if (teamDetail.equipment_info) {
+    modelTemp.equipment_info = {
+      head: teamDetail.equipment_info.head || [],
+      upper_body: teamDetail.equipment_info.upper_body || [],
+      lower_body: teamDetail.equipment_info.lower_body || [],
+      feet_body: teamDetail.equipment_info.feet_body || [],
+      backpack: teamDetail.equipment_info.backpack || [],
+      equipment_other: teamDetail.equipment_info.equipment_other || '',
+    }
+  }
+
+  // 处理活动图片 - 将已有图片转换为上传组件的格式
+  if (teamDetail.activity_images && teamDetail.activity_images.length > 0) {
+    modelTemp.fileList = teamDetail.activity_images.map((imageUrl, index) => ({
+      uid: `existing-${index}`,
+      name: `image-${index}.jpg`,
+      status: 'success',
+      url: imageUrl,
+      response: JSON.stringify({ data: imageUrl }),
+    }))
+  }
+  Object.assign(model, modelTemp)
+}
 
 // 1. 在 script 部分添加时间校验函数
 const validateTimeRange = () => {
@@ -352,8 +456,9 @@ const validateTimeRange = () => {
   const startTime = model.start_time
   const endTime = model.end_time
   console.log(now, startTime, endTime)
-  // 检查开始时间是否大于当前时间
-  if (startTime <= now) {
+
+  // 编辑模式下，允许开始时间小于当前时间（因为可能是已经开始的活动）
+  if (!isEditing.value && startTime <= now) {
     toast.show('开始时间必须大于当前时间')
     return false
   }
@@ -415,16 +520,18 @@ const handleSubmit = async () => {
     return
   }
   console.log('时间范围校验')
+
   const allSuccess =
     model?.fileList?.length > 0 && model?.fileList?.every((item) => item.status === 'success')
   if (!allSuccess) {
     toast.show('请上传至少1张图片！')
     return
   }
+
   const { valid, errors } = await form.value.validate()
 
   if (valid) {
-    await createTeam({
+    const submitData = {
       ...model,
       start_time: model.start_time,
       end_time: model.end_time,
@@ -432,21 +539,34 @@ const handleSubmit = async () => {
       max_participants: +model.max_participants,
       cost_method: model.is_car_required ? model.cost_method : 2,
       activity_images: model.fileList.map((item) => {
+        // 如果是已存在的图片，直接使用URL
+        if (item.url && !item.response) {
+          return item.url
+        }
+        // 如果是新上传的图片，解析response
         return JSON.parse(item.response).data
       }),
-    })
-    toast.show('队伍发布已提交！')
-    setTimeout(() => {
-      uni.navigateBack()
-    }, 1000)
-  }
-}
-const handleChangeActivity = ({ value, selectedItems }) => {
-  insuranceCost.value = selectedItems.insurance_cost
-}
+    }
 
-const handleFileChange = (e) => {
-  console.log(e)
+    try {
+      if (isEditing.value) {
+        submitData.team_id = editId.value
+        await updateTeam(submitData)
+        toast.show('活动更新成功！')
+      } else {
+        // 新建模式：调用创建接口
+        await createTeam(submitData)
+        toast.show('队伍发布已提交！')
+      }
+
+      setTimeout(() => {
+        uni.navigateBack()
+      }, 1000)
+    } catch (error) {
+      console.error('提交失败:', error)
+      toast.show(isEditing.value ? '更新失败，请重试' : '发布失败，请重试')
+    }
+  }
 }
 
 const onFeeBlur = () => {
