@@ -86,6 +86,19 @@ const changeTab = (value) => {
   paging.value.reload()
 }
 
+// 计算活动状态的方法
+const getActivityStatus = (item) => {
+  if (item.review_status === 0) {
+    return 'reviewing'
+  }
+  if (item.review_status === 1) {
+    return 'recruiting'
+  }
+  if (item.review_status === 2) {
+    return 'rejected'
+  }
+}
+
 // 请求活动列表
 const queryList = async (pageNo, pageSize) => {
   // 构建查询参数
@@ -94,10 +107,18 @@ const queryList = async (pageNo, pageSize) => {
     pageSize,
   }
   const { list } = await runGetActivityList(queryParams)
-  paging.value.complete(list)
+  // 为每个 item 添加 status
+  const processedList = list.map((item) => ({
+    ...item,
+    status: getActivityStatus(item),
+  }))
+
+  paging.value.complete(processedList)
 }
 
-const handleRefresh = () => {}
+const handleRefresh = () => {
+  paging.value.reload()
+}
 </script>
 
 <style scoped lang="scss">

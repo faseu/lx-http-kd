@@ -63,7 +63,7 @@
       <!-- 队长操作 -->
       <template v-if="isLeader">
         <!-- 审核中状态 -->
-        <template v-if="item.status !== 'reviewing'">
+        <template v-if="item.status === 'reviewing'">
           <view class="action-btn cancel-btn" @click.stop="handleCancelActivity">取消活动</view>
         </template>
 
@@ -303,7 +303,7 @@ const handleFormTeam = () => {
   background: #ffffff;
   border-radius: 20rpx;
   padding: 24rpx;
-  margin-bottom: 20rpx;
+  margin-bottom: 16rpx;
   box-shadow: 0 8rpx 20rpx 0 rgba(0, 0, 0, 0.11);
   box-sizing: border-box;
 }
