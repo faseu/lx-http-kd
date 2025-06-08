@@ -643,7 +643,7 @@ const getButtonText = computed(() => {
 // 获取按钮状态
 const getButtonDisabled = computed(() => {
   // return teamDetail.value?.is_full && !teamDetail.value?.is_member
-  return isCurrentUserJoined.value
+  return teamDetail.value?.is_full && !isCurrentUserJoined.value
 })
 
 // 在司机信息展示区域添加审核功能（仅创建者可见）

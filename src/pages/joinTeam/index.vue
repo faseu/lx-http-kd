@@ -624,7 +624,10 @@ const handleSubmit = async () => {
               uni.navigateBack()
             }, 1500)
           },
-          fail: (err) => {
+          fail: async () => {
+            // await httpPost('/api/pay/cancel', {
+            //   order_id: payData.order_id,
+            // })
             uni.showToast({ title: '支付失败', icon: 'none' })
           },
         })
