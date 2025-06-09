@@ -16,7 +16,7 @@
     <view class="p-16rpx ml-10rpx flex-1 flex flex-col justify-between text-24rpx">
       <view class="flex justify-between items-center">
         <view class="text-32rpx color-[#333] font-bold">{{ item.team_name || '未知地点' }}</view>
-        <view class="w-100rpx color-[#4BD06E]">{{ item.is_full ? '已满员' : '报名中...' }}</view>
+        <view class="w-100rpx color-[#4BD06E]">{{ getStatusText(item) }}</view>
       </view>
       <view class="flex items-center mr-12rpx">
         <view
@@ -48,12 +48,7 @@
           <!--          >-->
           <!--            <image class="w-36rpx h-36rpx rounded-[50%]" src="https://temp.im/40x40" />-->
           <!--          </view>-->
-          <block
-            v-for="(member, index) in item.members_info
-              ?.filter((item) => item.join_status === 1)
-              ?.slice(0, 3)"
-            :key="index"
-          >
+          <block v-for="(member, index) in item.members_info?.slice(0, 3)" :key="index">
             <view
               class="flex justify-center items-center w-40rpx h-40rpx bg-white rounded-[50%] pos-absolute top-0"
               :style="{ left: `${index * 20}rpx`, zIndex: 10 - index }"
@@ -65,11 +60,7 @@
             </view>
           </block>
         </view>
-        <view>
-          已有{{
-            item?.members_info?.filter((item) => item.join_status === 1)?.length || 0
-          }}人上车～
-        </view>
+        <view>已有{{ item?.members_info?.length || 0 }}人上车～</view>
       </view>
     </view>
   </view>
@@ -85,6 +76,17 @@ const props = defineProps({
 const goToTeamDetail = (id) => {
   console.log(id)
   uni.navigateTo({ url: `/pages/teamDetail/index?id=${id}` })
+}
+
+// 获取按钮文本
+const getStatusText = (item) => {
+  if (item?.is_formed) {
+    return '已封团'
+  } else if (item?.is_full) {
+    return '已满员'
+  } else {
+    return '报名中...'
+  }
 }
 </script>
 

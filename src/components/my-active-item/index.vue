@@ -156,18 +156,15 @@ const isLeader = computed(() => {
 // 当前用户是否已报名
 const isCurrentUserJoined = computed(() => {
   const currentUserId = getCurrentUserId()
-  return (
-    props.item.members_info
-      ?.filter((item) => item.join_status === 1)
-      ?.some((member) => member.user_info?.id === currentUserId) || false
-  )
+  return props.item.members_info?.some((member) => member.user_info?.id === currentUserId) || false
 })
 
 // 是否可以成团（人数达到要求）
 const canFormTeam = computed(() => {
-  const currentCount = props.item.members_info?.length || 0
-  const minRequired = Math.ceil((props.item.max_participants || 1) * 0.5) // 假设50%以上可以成团
-  return currentCount >= minRequired
+  // const currentCount = props.item.members_info?.length || 0
+  // const minRequired = Math.ceil((props.item.max_participants || 1) * 0.5) // 假设50%以上可以成团
+  // return currentCount >= minRequired
+  return true
 })
 
 // 显示的成员（最多6个）

@@ -22,7 +22,7 @@
             <view class="avator-img">
               <wd-img width="100%" height="100%" round :src="userInfo?.avatar" />
             </view>
-            <view class="edit-img">
+            <view class="edit-img" @click="goToSettings">
               <wd-img width="100%" height="100%" src="/static/images/mine/edit-btn.png" />
             </view>
           </view>

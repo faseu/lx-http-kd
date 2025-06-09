@@ -93,7 +93,7 @@
 
           <!-- 可以上车的情况 -->
           <view
-            v-else-if="availableSeats > 0 && +item.driver_review_status === 1"
+            v-else-if="availableSeats > 0 && +item.driver_review_status === 1 && !isFormed"
             class="big-btn big-btn-2"
             @click.stop="handleJoinCar"
           >
@@ -160,6 +160,10 @@ const props = defineProps({
   isMember: {
     type: Boolean,
     default: true,
+  },
+  isFormed: {
+    type: Boolean,
+    default: false,
   },
 })
 

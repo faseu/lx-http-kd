@@ -90,6 +90,9 @@ const getActivityStatus = (item) => {
     return 'reviewing'
   }
   if (item.review_status === 1) {
+    if (item.is_formed) {
+      return 'formed'
+    }
     return 'recruiting'
   }
   if (item.review_status === 2) {

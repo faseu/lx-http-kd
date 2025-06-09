@@ -44,12 +44,14 @@
       <!-- 时间和地点信息 -->
       <view class="mt-20rpx w-full bg-white p-24rpx box-border rounded-20rpx">
         <view class="flex items-center">
-          <view class="color-[#999] mr-42rpx ml-12rpx">活动开始</view>
           <image class="w-32rpx h-32rpx mr-16rpx" src="/static/images/teamDetail/clock.png" />
-          <view class="flex-1">{{ formatDateTime(teamDetail?.start_time) }}</view>
+          <view class="flex-1">
+            {{
+              formatDateTime(teamDetail?.start_time) + ' 至 ' + formatDateTime(teamDetail?.end_time)
+            }}
+          </view>
         </view>
         <view class="flex items-center mt-20rpx">
-          <view class="color-[#999] mr-42rpx ml-12rpx">活动位置</view>
           <image class="w-28rpx h-34rpx mr-16rpx" src="/static/images/teamDetail/location.png" />
           <view class="flex-1">
             <view>{{ teamDetail?.location || '活动地点' }}</view>
@@ -148,12 +150,12 @@
               teamDetail?.max_participants
             }}人)
           </view>
-          <view class="flex items-center">
+          <view class="flex items-center" @click="showUserSheet = true">
             <view class="color-[#FF665A]">
               {{
                 teamDetail?.is_full
                   ? '已满员'
-                  : `仅剩${(teamDetail?.max_participants || 0) - (teamDetail?.members_info?.filter((item) => item.join_status === 1)?.length || 0)}个名额`
+                  : `仅剩${(teamDetail?.max_participants || 0) - (teamDetail?.members_info?.length || 0)}个名额`
               }}
             </view>
             <wd-icon name="arrow-right" color="#FF665A" size="32rpx"></wd-icon>
@@ -161,9 +163,7 @@
         </view>
         <view class="flex mt-16rpx w-full gap-56rpx">
           <image
-            v-for="(member, index) in teamDetail?.members_info
-              ?.filter((item) => item.join_status === 1)
-              ?.slice(0, 6)"
+            v-for="(member, index) in teamDetail?.members_info?.slice(0, 6)"
             :key="index"
             class="w-60rpx h-60rpx rounded-[50%]"
             :src="member?.user_info?.avatar || 'https://temp.im/60x60'"
@@ -172,7 +172,7 @@
       </view>
 
       <!-- 车主信息 -->
-      <view class="mt-20rpx" v-if="hasDrivers">
+      <view class="mt-20rpx" v-if="teamDetail.travel_method === '拼车'">
         <view class="font-bold text-28rpx flex justify-between items-center">
           <view>车主信息</view>
           <wd-button
@@ -180,19 +180,18 @@
             type="primary"
             @click="goToDriverForm"
             size="small"
-            v-if="
-              teamDetail?.is_member && !isCurrentUserDriver && teamDetail?.travel_method === '拼车'
-            "
+            v-if="teamDetail?.is_member && !isCurrentUserDriver"
           >
             我要当车主
           </wd-button>
         </view>
-        <view class="mt-20rpx">
+        <view class="mt-20rpx" v-if="hasDrivers">
           <view v-for="driver in processedDrivers" :key="driver.id">
             <driverItem
               :item="driver"
               :bg="'#ffffff'"
               :showReviewStatus="teamDetail?.is_leader"
+              :isFormed="teamDetail?.is_formed"
               @approve-driver="handleApproveDriver"
               @reject-driver="handleRejectDriver"
               @join-car="handleJoinCar"
@@ -201,6 +200,7 @@
             />
           </view>
         </view>
+        <view class="mt-20rpx mb-20rpx flex justify-center" v-if="!hasDrivers">暂无车主</view>
       </view>
 
       <!-- 装备清单 -->
@@ -348,6 +348,36 @@
       </view>
       <wd-gap bg-color="#FFFFFF" safe-area-bottom height="0"></wd-gap>
     </view>
+    <wd-action-sheet custom-class="h-700rpx" v-model="showUserSheet" safe-area-inset-bottom>
+      <view class="h-full flex flex-col pos-relative z-index-199">
+        <view class="pos-relative h-162rpx flex items-center justify-center">
+          <view>
+            {{ `剩余${teamDetail?.max_participants - teamDetail?.members_info?.length}名额` }}
+          </view>
+          <wd-img
+            mode="widthFix"
+            custom-style="position: absolute !important;"
+            custom-class="pos-absolute right-36rpx block top-1/2 -translate-y-1/2 w-32rpx h-32rpx"
+            src="/static/images/common/close.png"
+            @click="showUserSheet = false"
+          />
+        </view>
+        <view class="flex-1 overflow-hidden flex flex-wrap p-50rpx box-border">
+          <view
+            v-for="member in teamDetail?.members_info"
+            :key="member.id"
+            class="w-50% h-80rpx flex items-center"
+          >
+            <image
+              class="w-80rpx h-80rpx rounded-50% mr-20rpx"
+              :src="member.user_info.avatar"
+            ></image>
+            <view class="mr-12rpx">{{ member.user_info.nickname }}</view>
+            <image class="w-32rpx h-32rpx" :src="getGenderIcon(member.user_info.gender)"></image>
+          </view>
+        </view>
+      </view>
+    </wd-action-sheet>
   </view>
 </template>
 
@@ -366,73 +396,9 @@ const toast = useToast()
 const id = ref(null)
 const teamDetail = ref(null)
 const isVerticalImage = ref(false)
+const showUserSheet = ref(false)
 
 const { run: getTeamDetail } = useRequest((e) => httpGet(`/api/team/user/detail/${e.id}`))
-
-// 计算属性
-const hasDrivers = computed(() => {
-  return teamDetail.value?.members_info?.some((member) => member.is_driver) || false
-})
-
-const drivers = computed(() => {
-  return teamDetail.value?.members_info?.filter((member) => member.is_driver) || []
-})
-
-// 检查当前用户是否已经是车主
-const isCurrentUserDriver = computed(() => {
-  const currentUserId = getCurrentUserId()
-  return (
-    teamDetail.value?.members_info?.some(
-      (member) => member.is_driver && member.user_info?.id === currentUserId,
-    ) || false
-  )
-})
-
-// 计算除第一张外的其他活动图片
-const remainingImages = computed(() => {
-  if (!teamDetail.value?.activity_images || teamDetail.value.activity_images.length <= 1) {
-    return []
-  }
-  return teamDetail.value.activity_images.slice(1)
-})
-
-// 格式化日期时间
-const formatDateTime = (dateTimeStr) => {
-  if (!dateTimeStr) return ''
-  const date = new Date(dateTimeStr)
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  const hour = String(date.getHours()).padStart(2, '0')
-  const minute = String(date.getMinutes()).padStart(2, '0')
-  const weekdays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
-  const weekday = weekdays[date.getDay()]
-
-  return `${year}-${month}-${day} ${hour}:${minute} ${weekday}`
-}
-
-// 获取费用分摊方式文本
-const getCostMethodText = (method) => {
-  const methodMap = {
-    1: 'AA制',
-    2: '车主不A，其余AA',
-    3: '车主承担',
-  }
-  return methodMap[method] || 'AA制'
-}
-
-// 脱敏手机号
-const maskPhone = (phone) => {
-  if (!phone) return ''
-  return phone.replace(/(\d{3})\d{4}(\d{4})/, '$1****$2')
-}
-
-// 跳转到车主申请页面
-const goToDriverForm = () => {
-  uni.navigateTo({
-    url: `/pages/applyDriver/index?teamId=${teamDetail.value?.id}`,
-  })
-}
 
 onLoad(async (options) => {
   id.value = options.id
@@ -468,6 +434,65 @@ const share = () => {
   })
 }
 
+// 计算属性
+const hasDrivers = computed(() => {
+  return teamDetail.value?.members_info?.some((member) => member.is_driver) || false
+})
+
+// 检查当前用户是否已经是车主
+const isCurrentUserDriver = computed(() => {
+  const currentUserId = getCurrentUserId()
+  return (
+    teamDetail.value?.members_info?.some(
+      (member) => member.is_driver && member.user_info?.id === currentUserId,
+    ) || false
+  )
+})
+
+// 计算除第一张外的其他活动图片
+const remainingImages = computed(() => {
+  if (!teamDetail.value?.activity_images || teamDetail.value.activity_images.length <= 1) {
+    return []
+  }
+  return teamDetail.value.activity_images.slice(1)
+})
+
+// 格式化日期时间
+const formatDateTime = (dateTimeStr) => {
+  if (!dateTimeStr) return ''
+  const date = new Date(dateTimeStr)
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  const hour = String(date.getHours()).padStart(2, '0')
+  const minute = String(date.getMinutes()).padStart(2, '0')
+
+  return `${year}-${month}-${day} ${hour}:${minute}`
+}
+
+// 获取费用分摊方式文本
+const getCostMethodText = (method) => {
+  const methodMap = {
+    1: 'AA制',
+    2: '车主不A，其余AA',
+    3: '车主承担',
+  }
+  return methodMap[method] || 'AA制'
+}
+
+// 脱敏手机号
+const maskPhone = (phone) => {
+  if (!phone) return ''
+  return phone.replace(/(\d{3})\d{4}(\d{4})/, '$1****$2')
+}
+
+// 跳转到车主申请页面
+const goToDriverForm = () => {
+  uni.navigateTo({
+    url: `/pages/applyDriver/index?teamId=${teamDetail.value?.id}`,
+  })
+}
+
 // 预览图片
 const previewImage = (current, urls) => {
   uni.previewImage({
@@ -490,6 +515,7 @@ const handleImageError = (e) => {
   isVerticalImage.value = false // 错误时默认为横图
 }
 
+// 处理司机数据
 const processedDrivers = computed(() => {
   if (!teamDetail.value?.members_info) return []
 
@@ -531,7 +557,7 @@ const getCurrentUserId = () => {
   return id
 }
 
-// 退出队伍功能 - 使用 wd-message-box
+// 退出队伍功能
 const exitTeam = async () => {
   try {
     message
@@ -623,9 +649,8 @@ const handleJoinButtonClick = () => {
 const isCurrentUserJoined = computed(() => {
   const currentUserId = getCurrentUserId()
   return (
-    teamDetail.value?.members_info
-      ?.filter((item) => item.join_status === 1)
-      ?.some((member) => member.user_info?.id === currentUserId) || false
+    teamDetail.value?.members_info?.some((member) => member.user_info?.id === currentUserId) ||
+    false
   )
 })
 
@@ -633,6 +658,8 @@ const isCurrentUserJoined = computed(() => {
 const getButtonText = computed(() => {
   if (isCurrentUserJoined.value) {
     return '退出队伍'
+  } else if (teamDetail.value?.is_formed) {
+    return '已封团'
   } else if (teamDetail.value?.is_full) {
     return '已满员'
   } else {
@@ -642,21 +669,10 @@ const getButtonText = computed(() => {
 
 // 获取按钮状态
 const getButtonDisabled = computed(() => {
-  // return teamDetail.value?.is_full && !teamDetail.value?.is_member
-  return teamDetail.value?.is_full && !isCurrentUserJoined.value
+  return (teamDetail.value?.is_full && !teamDetail.value?.is_member) || teamDetail.value?.is_formed
 })
 
-// 在司机信息展示区域添加审核功能（仅创建者可见）
-const getDriverReviewStatusText = (status) => {
-  const statusMap = {
-    0: '待审核',
-    1: '已通过',
-    2: '已拒绝',
-  }
-  return statusMap[status] || '未知'
-}
-
-// 审核通过司机 - 使用 wd-message-box
+// 审核通过司机
 const handleApproveDriver = async (driverData) => {
   try {
     message
@@ -675,7 +691,7 @@ const handleApproveDriver = async (driverData) => {
   }
 }
 
-// 审核拒绝司机 - 使用 wd-message-box
+// 审核拒绝司机
 const handleRejectDriver = async (driverData) => {
   try {
     message
@@ -694,7 +710,7 @@ const handleRejectDriver = async (driverData) => {
   }
 }
 
-// 加入车辆 - 使用 wd-message-box
+// 加入车辆
 const handleJoinCar = async (driverData) => {
   try {
     // 首先检查用户是否已经报名加入队伍
@@ -723,7 +739,9 @@ const handleJoinCar = async (driverData) => {
       })
       .then(async () => {
         uni.showLoading({ title: '处理中...' })
-
+        await httpPost('/api/team/quit_driver', {
+          team_id: teamDetail.value?.id,
+        })
         await httpPost('/api/team/update_user', {
           driver_id: driverData.id,
           team_id: teamDetail.value?.id,
@@ -754,48 +772,15 @@ const handleJoinCar = async (driverData) => {
   }
 }
 
-// 退出车辆 - 使用 wd-message-box
-const handleExitCar = async (driverData) => {
-  try {
-    message
-      .confirm({
-        msg: `确定要退出 ${driverData.name || '该司机'} 的车辆吗？`,
-        title: '确认退出',
-      })
-      .then(async () => {
-        uni.showLoading({ title: '处理中...' })
-
-        await httpPost('/api/team/update_user', {
-          driver_id: null,
-          team_id: teamDetail.value?.id,
-        })
-
-        uni.hideLoading()
-        uni.showToast({
-          title: '退出成功',
-          icon: 'success',
-        })
-
-        // 刷新页面数据
-        setTimeout(async () => {
-          const data = await getTeamDetail({ id: id.value })
-          teamDetail.value = data.team_detail
-        }, 1000)
-      })
-      .catch(() => {
-        console.log('取消退出车辆')
-      })
-  } catch (error) {
-    uni.hideLoading()
-    uni.showToast({
-      title: '退出失败',
-      icon: 'error',
-    })
-    console.error('退出车辆失败:', error)
-  }
+// 退出车辆
+const handleExitCar = async () => {
+  message.alert({
+    msg: `请直接加入其他车辆/自己申请车主`,
+    title: '温馨提示',
+  })
 }
 
-// 退出司机身份 - 使用 wd-message-box
+// 退出司机身份
 const handleExitDriver = async (driverData) => {
   try {
     message
@@ -833,6 +818,13 @@ const handleExitDriver = async (driverData) => {
     })
     console.error('退出司机身份失败:', error)
   }
+}
+
+// 获取性别图标
+const getGenderIcon = (gender) => {
+  return gender === 2
+    ? '/static/images/common/female-icon.png'
+    : '/static/images/common/male-icon.png'
 }
 </script>
 
