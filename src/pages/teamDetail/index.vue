@@ -172,7 +172,7 @@
       </view>
 
       <!-- 车主信息 -->
-      <view class="mt-20rpx" v-if="teamDetail.travel_method === '拼车'">
+      <view class="mt-20rpx" v-if="teamDetail?.travel_method === '拼车'">
         <view class="font-bold text-28rpx flex justify-between items-center">
           <view>车主信息</view>
           <wd-button
@@ -349,7 +349,7 @@
       <wd-gap bg-color="#FFFFFF" safe-area-bottom height="0"></wd-gap>
     </view>
     <wd-action-sheet custom-class="h-700rpx" v-model="showUserSheet" safe-area-inset-bottom>
-      <view class="h-full flex flex-col pos-relative z-index-199">
+      <view class="h-full flex flex-col pos-relative z-index-9999">
         <view class="pos-relative h-162rpx flex items-center justify-center">
           <view>
             {{ `剩余${teamDetail?.max_participants - teamDetail?.members_info?.length}名额` }}
@@ -365,15 +365,15 @@
         <view class="flex-1 overflow-hidden flex flex-wrap p-50rpx box-border">
           <view
             v-for="member in teamDetail?.members_info"
-            :key="member.id"
+            :key="member?.id"
             class="w-50% h-80rpx flex items-center"
           >
             <image
               class="w-80rpx h-80rpx rounded-50% mr-20rpx"
-              :src="member.user_info.avatar"
+              :src="member?.user_info?.avatar"
             ></image>
-            <view class="mr-12rpx">{{ member.user_info.nickname }}</view>
-            <image class="w-32rpx h-32rpx" :src="getGenderIcon(member.user_info.gender)"></image>
+            <view class="mr-12rpx">{{ member?.user_info?.nickname }}</view>
+            <image class="w-32rpx h-32rpx" :src="getGenderIcon(member?.user_info?.gender)"></image>
           </view>
         </view>
       </view>
