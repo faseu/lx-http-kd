@@ -104,13 +104,14 @@
           :minDate="Date.now()"
           v-model="model.end_time"
         />
-        <wd-picker
-          label="人数"
-          placeholder="请选择人数"
+        <wd-input
+          label="人数(个)"
+          type="number"
           label-width="100px"
+          :maxlength="3"
           prop="max_participants"
           v-model="model.max_participants"
-          :columns="numberList"
+          placeholder="请输入人数"
         />
         <wd-input
           label="集合地点"
@@ -413,7 +414,7 @@ const fillFormWithTeamDetail = (teamDetail) => {
   modelTemp.hiking_duration = parseFloat(teamDetail.hiking_duration) || 0
 
   // 活动设置
-  modelTemp.max_participants = teamDetail.max_participants || 1
+  modelTemp.max_participants = teamDetail.max_participants || 0
   modelTemp.travel_method = teamDetail.travel_method || '拼车'
   modelTemp.cost_method = teamDetail.cost_method || 1
   modelTemp.is_car_required = teamDetail.is_car_required || true

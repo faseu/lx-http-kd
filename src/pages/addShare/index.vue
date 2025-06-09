@@ -27,14 +27,6 @@
 
       <!-- 基本信息 -->
       <wd-cell-group custom-class="group" title="基本信息">
-        <wd-input
-          label="标题"
-          label-width="100px"
-          :maxlength="30"
-          prop="title"
-          v-model="model.title"
-          placeholder="请输入标题"
-        />
         <wd-textarea
           label="描述"
           label-width="100px"
@@ -49,16 +41,19 @@
       </wd-cell-group>
 
       <!-- 位置信息 -->
-      <wd-cell-group custom-class="group" title="位置信息">
-        <wd-input
-          label="省份/城市"
-          label-width="100px"
-          :maxlength="20"
-          prop="province"
-          v-model="model.province"
-          placeholder="请输入省份或城市"
-        />
-      </wd-cell-group>
+      <div @click="handleSelectCity">
+        <wd-cell-group custom-class="group" title="位置信息">
+          <wd-input
+            disabled="false"
+            label="省份/城市"
+            label-width="100px"
+            :maxlength="20"
+            prop="province"
+            v-model="model.province"
+            placeholder="请输入省份或城市"
+          />
+        </wd-cell-group>
+      </div>
 
       <!-- 关联活动 -->
       <wd-cell-group custom-class="group" title="关联活动">
@@ -98,6 +93,37 @@
         <wd-gap bg-color="#FFFFFF" safe-area-bottom height="0"></wd-gap>
       </view>
     </wd-form>
+    <wd-action-sheet custom-class="h-700rpx" v-model="showCitySheet" safe-area-inset-bottom>
+      <view class="h-full flex flex-col">
+        <view class="pos-relative h-162rpx flex items-center justify-center">
+          <view>选择地区</view>
+          <wd-img
+            mode="widthFix"
+            custom-style="position: absolute !important;"
+            custom-class="pos-absolute right-36rpx block top-1/2 -translate-y-1/2 w-32rpx h-32rpx"
+            src="/static/images/common/close.png"
+            @click="showCitySheet = false"
+          />
+        </view>
+        <view class="flex-1 overflow-hidden">
+          <wd-picker-view
+            :columns="columns"
+            v-model="citySheet"
+            :column-change="onChangeProvince"
+            immediate-change
+            @change="handleChangeCity"
+          />
+          <wd-button
+            custom-class="w-590rpx h-100rpx diy-button"
+            size="large"
+            block
+            @click="confirmCity"
+          >
+            确定
+          </wd-button>
+        </view>
+      </view>
+    </wd-action-sheet>
   </view>
 </template>
 
@@ -106,14 +132,18 @@ import { reactive, ref } from 'vue'
 import { httpPost, httpGet } from '@/utils/http'
 import { onLoad } from '@dcloudio/uni-app'
 import { useToast } from 'wot-design-uni'
+import { city, province } from '@/utils/config'
+const columns = ref([province, ['市辖区']])
 
 const toast = useToast()
 const form = ref()
 
+const showCitySheet = ref(false)
+const citySheet = ref(['北京市', '市辖区'])
+
 // 表单数据
 const model = reactive({
   fileList: [],
-  title: '',
   description: '',
   province: '',
   activity_id: null,
@@ -124,7 +154,7 @@ const activityList = ref([])
 
 // 获取活动列表
 const { run: getActivityList } = useRequest(() =>
-  httpGet('/api/activity/select_list', {
+  httpGet('/api/activity/all_list', {
     page: 1,
     page_size: 1000,
   }),
@@ -135,15 +165,10 @@ const { run: publishMoment } = useRequest((data) => httpPost('/api/album/upload'
 
 // 表单验证规则
 const getRules = () => ({
-  title: [
-    { required: true, message: '请输入标题' },
-    { min: 2, message: '标题至少2个字符' },
-  ],
   description: [
     { required: true, message: '请输入描述' },
     { min: 5, message: '描述至少5个字符' },
   ],
-  province: [{ required: true, message: '请输入省份或城市' }],
 })
 
 onLoad(async (options) => {
@@ -162,6 +187,27 @@ onLoad(async (options) => {
 const handleFileChange = ({ fileList }) => {
   model.fileList = fileList
   console.log('文件列表更新:', fileList)
+}
+
+const handleSelectCity = () => {
+  showCitySheet.value = true
+}
+
+const handleChangeCity = ({ value }) => {
+  console.log(value)
+}
+
+const onChangeProvince = (pickerView, value, columnIndex, resolve) => {
+  if (columnIndex === 0) {
+    const province = value[columnIndex].value
+    pickerView.setColumnData(1, city.find((item) => item.value === province)?.children)
+  }
+  resolve()
+}
+
+const confirmCity = () => {
+  model.province = citySheet.value.join(' ')
+  showCitySheet.value = false
 }
 
 // 重置表单
