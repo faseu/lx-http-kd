@@ -1,5 +1,5 @@
 <template>
-  <view class="item" :style="`background: ${bg}`">
+  <view class="item pos-relative" :style="`background: ${bg}`">
     <!-- 司机头像区域 -->
     <view class="w-140rpx h-140rpx pos-relative rounded-20rpx">
       <image
@@ -15,7 +15,7 @@
     </view>
 
     <!-- 司机基本信息 -->
-    <view class="p-16rpx ml-10rpx flex-1 flex flex-col justify-between">
+    <view class="ml-10rpx flex-1 flex flex-col justify-around">
       <view class="flex items-center">
         <view class="font-bold mr-8rpx">{{ item.name || '匿名司机' }}</view>
         <!-- 性别图标 -->
@@ -25,12 +25,21 @@
         <view>上车点：{{ item.car_meeting_point }}</view>
       </view>
       <view class="text-20rpx color-[#999]">
-        车牌号：{{ formatLicensePlate(item.license_plate) }}
+        <text>车牌号：{{ formatLicensePlate(item.license_plate) }}</text>
+        <text
+          v-if="showViewPhotos && item.car_photo"
+          class="underline color-[#009dff] ml-12rpx"
+          @click.stop="handleViewPhotos"
+        >
+          查看证件
+        </text>
       </view>
     </view>
 
     <!-- 右侧操作区域 -->
-    <view class="w-228rpx flex flex-col items-center justify-between">
+    <view
+      class="pos-absolute top-0 right-0 h-full w-228rpx flex flex-col items-center justify-between"
+    >
       <!-- 乘客头像展示 -->
       <view class="flex items-center">
         <view class="mr-12rpx" v-if="+item.driver_review_status !== 0">乘客：</view>
@@ -39,7 +48,7 @@
             v-for="(passenger, index) in displayPassengers"
             :key="index"
             class="flex justify-center items-center w-60rpx h-60rpx bg-white rounded-[50%] pos-absolute top-0"
-            :style="`left: ${index * 30}rpx; z-index: ${10 - index};`"
+            :style="{ left: `${index * 20}rpx`, zIndex: 10 - index }"
           >
             <image
               class="w-54rpx h-54rpx rounded-[50%]"
@@ -151,11 +160,16 @@ const props = defineProps({
       driver_review_status: 0, // 0:待审核 1:通过 2:拒绝
       is_current_user_car: false, // 是否是当前用户的车
       is_current_user_passenger: false, // 当前用户是否是该车乘客
+      car_photo: '', // 车辆证件照片
     }),
   },
   showReviewStatus: {
     type: Boolean,
     default: false, // 是否显示审核按钮（仅创建者可见）
+  },
+  showViewPhotos: {
+    type: Boolean,
+    default: false, // 是否显示查看图片按钮（仅队长可见）
   },
   isMember: {
     type: Boolean,
@@ -167,7 +181,14 @@ const props = defineProps({
   },
 })
 
-const emit = defineEmits(['approve-driver', 'reject-driver', 'join-car', 'exit-car', 'exit-driver'])
+const emit = defineEmits([
+  'approve-driver',
+  'reject-driver',
+  'join-car',
+  'exit-car',
+  'exit-driver',
+  'view-photos', // 新增事件
+])
 
 // 计算可用座位数
 const availableSeats = computed(() => {
@@ -225,6 +246,11 @@ const handleExitPassenger = () => {
 
 const handleExitDriver = () => {
   emit('exit-driver', props.item)
+}
+
+// 处理查看图片
+const handleViewPhotos = () => {
+  emit('view-photos', props.item)
 }
 </script>
 

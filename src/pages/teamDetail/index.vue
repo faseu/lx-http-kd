@@ -192,12 +192,14 @@
               :item="driver"
               :bg="'#ffffff'"
               :showReviewStatus="teamDetail?.is_leader"
+              :showViewPhotos="teamDetail?.is_leader"
               :isFormed="teamDetail?.is_formed"
               @approve-driver="handleApproveDriver"
               @reject-driver="handleRejectDriver"
               @join-car="handleJoinCar"
               @exit-car="handleExitCar"
               @exit-driver="handleExitDriver"
+              @view-photos="handleViewDriverPhotos"
             />
           </view>
         </view>
@@ -540,6 +542,7 @@ const processedDrivers = computed(() => {
         license_plate: driver.license_plate || '未知车牌',
         car_meeting_point: driver.car_meeting_point || '待确定上车点',
         car_seat_count: driver.car_seat_count || 4,
+        car_photo: driver.car_photo || [],
         car_passengers: driver.car_passengers || [],
         driver_review_status: driver.driver_review_status || '0',
         is_current_user_car: isCurrentUserCar,
@@ -831,6 +834,46 @@ const getGenderIcon = (gender) => {
   return gender === 2
     ? '/static/images/common/female-icon.png'
     : '/static/images/common/male-icon.png'
+}
+
+// 修改 handleViewDriverPhotos 方法以支持自定义弹窗
+const handleViewDriverPhotos = (driverData) => {
+  console.log('查看车辆图片:', driverData)
+
+  if (!driverData.car_photo) {
+    uni.showToast({
+      title: '该车主未上传证件照片',
+      icon: 'none',
+    })
+    return
+  }
+
+  // 解析图片URL
+  const photos = driverData.car_photo.split(',').filter((photo) => photo.trim())
+
+  if (photos.length === 0) {
+    uni.showToast({
+      title: '暂无可查看的图片',
+      icon: 'none',
+    })
+    return
+  }
+
+  // 方式1：使用系统图片预览（推荐，简单易用）
+  uni.previewImage({
+    current: photos[0],
+    urls: photos,
+    success: () => {
+      console.log('图片预览成功')
+    },
+    fail: (err) => {
+      console.error('图片预览失败:', err)
+      uni.showToast({
+        title: '图片加载失败',
+        icon: 'none',
+      })
+    },
+  })
 }
 </script>
 
