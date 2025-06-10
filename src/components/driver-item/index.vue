@@ -22,7 +22,7 @@
         <image class="w-32rpx h-32rpx" :src="getGenderIcon(item.gender)" />
       </view>
       <view class="flex items-center mr-12rpx">
-        <view>上车点：活动地点</view>
+        <view>上车点：{{ item.car_meeting_point }}</view>
       </view>
       <view class="text-20rpx color-[#999]">
         车牌号：{{ formatLicensePlate(item.license_plate) }}
@@ -145,7 +145,7 @@ const props = defineProps({
       avatar: '',
       gender: 1, // 1:男 2:女
       license_plate: '',
-      pickup_location: '',
+      car_meeting_point: '',
       car_seat_count: 4,
       car_passengers: [],
       driver_review_status: 0, // 0:待审核 1:通过 2:拒绝

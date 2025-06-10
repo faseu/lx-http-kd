@@ -121,6 +121,15 @@
             }
           "
         />
+        <wd-input
+          v-if="model.is_driver"
+          label="集合地点"
+          label-width="100px"
+          :maxlength="50"
+          prop="car_meeting_point"
+          v-model="model.car_meeting_point"
+          placeholder="请输入集合地点"
+        />
       </wd-cell-group>
 
       <view class="mt-30rpx flex" v-if="model.is_driver">
@@ -255,6 +264,7 @@ const model = reactive({
   is_driver: false,
   car_seat_count: '',
   license_plate: '',
+  car_meeting_point: '',
   emergency_contact: '',
   emergency_contact_phone: '',
   fileList1: [],
@@ -330,7 +340,7 @@ const processedDrivers = computed(() => {
         avatar: driver.user_info?.avatar || 'https://temp.im/166x166',
         gender: driver.user_info?.gender || 1,
         license_plate: driver.license_plate || '未知车牌',
-        pickup_location: driver.pickup_location || '待确定上车点',
+        car_meeting_point: driver.car_meeting_point || '待确定上车点',
         car_seat_count: driver.car_seat_count || 4,
         car_passengers: carPassengers,
         driver_review_status: driver.driver_review_status || 1,
@@ -363,6 +373,12 @@ const getRules = () => ({
     {
       required: model.is_driver,
       message: '请填写车牌信息',
+    },
+  ],
+  car_meeting_point: [
+    {
+      required: model.is_driver,
+      message: '请填写集合地点',
     },
   ],
   car_seat_count: [
@@ -406,6 +422,7 @@ const handleDriverSwitchChange = ({ value: newValue }) => {
     // 清空司机相关信息
     model.car_seat_count = ''
     model.license_plate = ''
+    model.car_meeting_point = ''
     model.fileList1 = []
     model.fileList2 = []
   } else {
@@ -438,6 +455,7 @@ const handleSelectDriver = (driverData) => {
         model.is_driver = false
         model.car_seat_count = ''
         model.license_plate = ''
+        model.car_meeting_point = ''
         model.fileList1 = []
         model.fileList2 = []
 
@@ -585,7 +603,7 @@ const handleSubmit = async () => {
       return
     }
 
-    if (model.is_driver && !/^[\u4e00-\u9fa5]{1}[A-Z]{1}[A-Z0-9]{5}$/.test(model.license_plate)) {
+    if (model.is_driver && !/^[\u4e00-\u9fa5]{1}[A-Z]{1}[A-Z0-9]{5,6}$/.test(model.license_plate)) {
       toast.show('请输入正确的车牌号，例如：渝A12345')
       return
     }

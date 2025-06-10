@@ -72,6 +72,7 @@ import tabbar from '@/components/tabbar/index.vue'
 import WaterfallMoments from '@/components/WaterfallMoments/index.vue'
 import { onShow } from '@dcloudio/uni-app'
 import { httpGet, httpPost } from '@/utils/http'
+import { getIsTabbar } from '@/utils'
 
 // 请求精彩瞬间列表
 const { run: runGetMomentsList } = useRequest(({ page_size, page }) =>
@@ -84,8 +85,11 @@ const { run: runGetMomentsList } = useRequest(({ page_size, page }) =>
 const paging = ref(null)
 const dataList = ref([])
 
-onShow(() => {
-  uni?.hideTabBar()
+onShow(async () => {
+  if (getIsTabbar()) {
+    uni?.hideTabBar()
+  }
+  paging?.value?.reload()
 })
 
 // 请求列表数据

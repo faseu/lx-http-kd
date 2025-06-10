@@ -329,7 +329,7 @@
       </view>
     </view>
     <wd-gap safe-area-bottom height="150rpx"></wd-gap>
-    <view class="footer bg-white">
+    <view class="footer bg-white" v-show="!showUserSheet">
       <view class="flex items-center text-20rpx h-120rpx">
         <view class="flex flex-col items-center mr-48rpx" @click="share">
           <image class="w-32rpx h-32rpx" src="/static/images/teamDetail/share.png" alt="" />
@@ -349,7 +349,7 @@
       <wd-gap bg-color="#FFFFFF" safe-area-bottom height="0"></wd-gap>
     </view>
     <wd-action-sheet custom-class="h-700rpx" v-model="showUserSheet" safe-area-inset-bottom>
-      <view class="h-full flex flex-col pos-relative z-index-9999">
+      <view class="h-full flex flex-col pos-relative">
         <view class="pos-relative h-162rpx flex items-center justify-center">
           <view>
             {{ `剩余${teamDetail?.max_participants - teamDetail?.members_info?.length}名额` }}
@@ -362,17 +362,19 @@
             @click="showUserSheet = false"
           />
         </view>
-        <view class="flex-1 overflow-hidden flex flex-wrap p-50rpx box-border">
+        <view class="flex-1 overflow-y-auto flex flex-wrap p-[0_50rpx_50rpx_50rpx] box-border">
           <view
             v-for="member in teamDetail?.members_info"
             :key="member?.id"
-            class="w-50% h-80rpx flex items-center"
+            class="w-50% h-80rpx mt-12px flex items-center"
           >
             <image
               class="w-80rpx h-80rpx rounded-50% mr-20rpx"
               :src="member?.user_info?.avatar"
             ></image>
-            <view class="mr-12rpx">{{ member?.user_info?.nickname }}</view>
+            <view class="mr-12rpx max-w-150rpx overflow-hidden text-ellipsis whitespace-nowrap">
+              {{ member?.user_info?.nickname }}
+            </view>
             <image class="w-32rpx h-32rpx" :src="getGenderIcon(member?.user_info?.gender)"></image>
           </view>
         </view>
@@ -535,7 +537,7 @@ const processedDrivers = computed(() => {
         avatar: driver.user_info?.avatar || 'https://temp.im/166x166',
         gender: driver.user_info?.gender || 1,
         license_plate: driver.license_plate || '未知车牌',
-        pickup_location: driver.pickup_location || '待确定上车点',
+        car_meeting_point: driver.car_meeting_point || '待确定上车点',
         car_seat_count: driver.car_seat_count || 4,
         car_passengers: driver.car_passengers || [],
         driver_review_status: driver.driver_review_status || '0',
@@ -568,10 +570,12 @@ const exitTeam = async () => {
       .then(async () => {
         uni.showLoading({ title: '处理中...' })
 
-        await httpPost('/api/pay/refund', {
+        const result = await httpPost('/api/pay/refund', {
           team_id: teamDetail.value?.id,
         })
-
+        if (result.code !== 200) {
+        }
+        console.log(result)
         uni.hideLoading()
         uni.showToast({
           title: '退出成功',

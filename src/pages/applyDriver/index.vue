@@ -24,12 +24,20 @@
         <wd-input
           label="车牌号"
           label-width="100px"
-          :maxlength="20"
+          :maxlength="8"
           prop="license_plate"
           disabled
           v-model="model.license_plate"
           placeholder="请输入车牌号"
           @click="showCarKeyboard"
+        />
+        <wd-input
+          label="集合地点"
+          label-width="100px"
+          :maxlength="50"
+          prop="car_meeting_point"
+          v-model="model.car_meeting_point"
+          placeholder="请输入集合地点"
         />
       </wd-cell-group>
 
@@ -115,6 +123,7 @@ const teamId = ref(null)
 const model = reactive({
   car_seat_count: '',
   license_plate: '',
+  car_meeting_point: '',
   fileList1: [], // 驾驶证
   fileList2: [], // 行驶证
 })
@@ -129,8 +138,14 @@ const getRules = () => ({
   license_plate: [
     { required: true, message: '请输入车牌号' },
     {
-      pattern: /^[\u4e00-\u9fa5]{1}[A-Z]{1}[A-Z0-9]{5}$/,
+      pattern: /^[\u4e00-\u9fa5]{1}[A-Z]{1}[A-Z0-9]{5,6}$/,
       message: '请输入正确的车牌号格式，例如：渝A12345',
+    },
+  ],
+  car_meeting_point: [
+    {
+      required: true,
+      message: '请填写集合地点',
     },
   ],
 })
@@ -196,6 +211,7 @@ const handleSubmit = async () => {
       is_driver: true,
       car_seat_count: parseInt(model.car_seat_count),
       license_plate: model.license_plate,
+      car_meeting_point: model.car_meeting_point,
       car_photo: `${JSON.parse(model.fileList1[0].response).data},${JSON.parse(model.fileList2[0].response).data}`,
     }
 

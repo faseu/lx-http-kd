@@ -45,9 +45,13 @@
         </view>
       </view>
       <view class="follow-box">
-        <view class="follow-item" v-for="(i, j) in followList" :key="j">
-          <view class="num">{{ i.num }}</view>
-          <view class="label">{{ i.name }}</view>
+        <view class="follow-item">
+          <view class="num">{{ userInfo?.following_count }}</view>
+          <view class="label">关注</view>
+        </view>
+        <view class="follow-item">
+          <view class="num">{{ userInfo?.followers_count }}</view>
+          <view class="label">粉丝</view>
         </view>
       </view>
       <view class="content-box">

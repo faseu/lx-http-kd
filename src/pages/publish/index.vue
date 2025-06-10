@@ -160,17 +160,6 @@
           @blur="onFeeBlur"
         />
         <wd-input
-          label="保险(元)"
-          type="digit"
-          label-width="100px"
-          :maxlength="20"
-          disabled
-          prop="insurance_cost"
-          v-model="model.insurance_cost"
-          placeholder="请输入保险费用"
-          @blur="onFeeBlur"
-        />
-        <wd-input
           label="其他(元)"
           type="digit"
           label-width="100px"

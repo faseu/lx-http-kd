@@ -30,7 +30,7 @@
             <image :src="item.cover_image" mode="aspectFill" />
           </view>
           <view class="waterfall-content">
-            <view class="waterfall-title">{{ item.title || item.description || '精彩瞬间' }}</view>
+            <view class="waterfall-title">{{ item.description || '精彩瞬间' }}</view>
             <view class="waterfall-info">
               <view class="waterfall-author">
                 <image
