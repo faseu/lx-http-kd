@@ -27,14 +27,9 @@
               </block>
             </wd-tabs>
           </view>
-          <view class="search-box">
-            <input v-model="searchInput" placeholder="中坝森林" />
-            <wd-img
-              height="44rpx"
-              width="72rpx"
-              src="/static/images/homepage/search-btn.png"
-              @click="inputClick"
-            ></wd-img>
+          <view class="search-box" @click="goToSearch">
+            <view class="search-input">中坝森林</view>
+            <wd-img height="44rpx" width="72rpx" src="/static/images/homepage/search-btn.png" />
           </view>
         </view>
       </template>
@@ -150,6 +145,10 @@ const toDetail = (e) => {
 
 const goToAddShare = (id) => {
   uni.navigateTo({ url: `/pages/addShare/index` })
+}
+
+const goToSearch = () => {
+  uni.navigateTo({ url: `/pages/search/index?tab=${1}` })
 }
 </script>
 

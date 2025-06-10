@@ -282,6 +282,7 @@ const handleQuitActivity = () => {
 
       await httpPost('/api/pay/refund', {
         team_id: props?.item?.id,
+        order_id: props?.item?.order_id,
       })
 
       uni.hideLoading()

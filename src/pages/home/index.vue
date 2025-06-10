@@ -193,7 +193,7 @@ onShow(async () => {
 })
 
 const goToSearch = () => {
-  uni.navigateTo({ url: '/pages/search/index' })
+  uni.navigateTo({ url: `/pages/search/index?tab=${0}` })
 }
 </script>
 

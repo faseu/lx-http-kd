@@ -15,6 +15,7 @@
         mode="aspectFill"
         @load="handleImageLoad"
         @error="handleImageError"
+        @click="previewImage(teamDetail?.activity_images?.[0], teamDetail?.activity_images)"
       />
     </view>
     <view class="p-30rpx w-full box-border">
@@ -572,6 +573,7 @@ const exitTeam = async () => {
 
         const result = await httpPost('/api/pay/refund', {
           team_id: teamDetail.value?.id,
+          order_id: teamDetail.value?.order_id,
         })
         if (result.code !== 200) {
         }

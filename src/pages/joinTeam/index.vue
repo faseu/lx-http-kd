@@ -629,26 +629,33 @@ const handleSubmit = async () => {
       } else {
         const payData = await joinTeam(submitData)
         console.log(payData)
-        uni.requestPayment({
-          provider: 'wxpay',
-          timeStamp: payData.timeStamp,
-          nonceStr: payData.nonceStr,
-          package: payData.package,
-          signType: payData.signType,
-          paySign: payData.paySign,
-          success: (res) => {
-            uni.showToast({ title: '支付成功，加入小队' })
-            setTimeout(() => {
-              uni.navigateBack()
-            }, 1500)
-          },
-          fail: async () => {
-            // await httpPost('/api/pay/cancel', {
-            //   order_id: payData.order_id,
-            // })
-            uni.showToast({ title: '支付失败', icon: 'none' })
-          },
-        })
+        if (payData.pay_status === 1) {
+          uni.showToast({ title: '已加入小队' })
+          setTimeout(() => {
+            uni.navigateBack()
+          }, 1500)
+        } else {
+          uni.requestPayment({
+            provider: 'wxpay',
+            timeStamp: payData.timeStamp,
+            nonceStr: payData.nonceStr,
+            package: payData.package,
+            signType: payData.signType,
+            paySign: payData.paySign,
+            success: (res) => {
+              uni.showToast({ title: '支付成功，加入小队' })
+              setTimeout(() => {
+                uni.navigateBack()
+              }, 1500)
+            },
+            fail: async () => {
+              // await httpPost('/api/pay/cancel', {
+              //   order_id: payData.order_id,
+              // })
+              uni.showToast({ title: '支付失败', icon: 'none' })
+            },
+          })
+        }
       }
     } catch (error) {
       console.error('提交失败:', error)
