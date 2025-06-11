@@ -56,7 +56,7 @@ import { ref } from 'vue'
 import { onLoad, onUnload } from '@dcloudio/uni-app'
 import ChatInputBar from '@/components/chat-input-bar/index.vue'
 import ChatItem from '@/components/chat-item/index.vue'
-import { useWebSocketStore } from '@/store'
+import { useUserStore, useWebSocketStore } from '@/store'
 
 const wsStore = useWebSocketStore()
 const id = ref(null)
@@ -65,6 +65,10 @@ const inputBar = ref(null)
 const lastMessageId = ref(null)
 // v-model绑定的这个变量不要在分页请求结束中自己赋值！！！
 const dataList = ref([])
+const userStore = useUserStore()
+const {
+  user_info: { id: userId },
+} = userStore.userInfo
 
 onLoad((options) => {
   id.value = options.id
@@ -84,7 +88,7 @@ const queryList = (pageNo, pageSize) => {
     page: pageNo,
     page_size: pageSize,
     group_id: id.value,
-    chat_type: 'group',
+    chat_type: 'team',
   }
   if (lastMessageId.value) {
     data = {
@@ -116,8 +120,8 @@ const doSend = (msg) => {
     msg_type: 'text', // 消息类型 可选：text, image, audio, video
     file_url: '', // 如果是 image, audio, video 类型，则 必传
     command: 'send_message', // 添加 command 字段
-    group_id: id.value,
-    chat_type: 'group',
+    team_id: id.value,
+    chat_type: 'team',
   })
   setTimeout(() => {
     uni.hideLoading()
@@ -126,7 +130,7 @@ const doSend = (msg) => {
 
 const handleMessage = (msg) => {
   console.log('组件中收到消息:', msg)
-  if (msg.type === 'history' && Number(msg.group_id) === Number(id.value)) {
+  if (msg.type === 'history' && Number(msg.team_id) === Number(id.value)) {
     if (!lastMessageId.value) {
       lastMessageId.value = msg?.messages[0]?.id
     }
@@ -135,18 +139,18 @@ const handleMessage = (msg) => {
       icon: item?.sender?.avatar,
       name: item?.sender?.username,
       content: item?.content,
-      isMe: item?.sender?.id === 4,
+      isMe: item?.sender?.id === userId,
     }))
     console.log(messageList)
     paging?.value?.complete(messageList)
   }
-  if (msg.type === 'broadcast_message' && Number(msg.group_id) === Number(id.value)) {
+  if (msg.type === 'broadcast_message' && Number(msg.team_id) === Number(id.value)) {
     const message = {
       time: msg?.timestamp,
       icon: msg?.sender?.avatar,
       name: msg?.sender?.username,
       content: msg?.content,
-      isMe: msg?.sender?.id === 4,
+      isMe: msg?.sender?.id === userId,
     }
     paging?.value?.addChatRecordData(message)
   }

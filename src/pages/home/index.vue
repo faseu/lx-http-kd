@@ -117,9 +117,10 @@
 import tabbar from '@/components/tabbar/index.vue'
 import activeItem from '@/components/active-item/index.vue'
 import { onShow } from '@dcloudio/uni-app'
-import { httpGet, httpPost } from '@/utils/http'
+import { httpGet } from '@/utils/http'
 import { ref } from 'vue'
 import { getIsTabbar } from '@/utils'
+import { useUserStore, useWebSocketStore } from '@/store'
 
 const paging = ref(null)
 const functionList = ref([])
@@ -190,6 +191,16 @@ onShow(async () => {
   const value2 = await runGetCategoriesList()
   functionList.value = value2?.list
   paging?.value?.reload()
+})
+const wsStore = useWebSocketStore()
+const userStore = useUserStore()
+const { token } = userStore.userInfo
+
+onLoad(() => {
+  if (token) {
+    wsStore.initWebSocket(`ws://1.14.59.102:8000/ws/chat?token=${token}&type=team`)
+    console.log(wsStore.groups)
+  }
 })
 
 const goToSearch = () => {

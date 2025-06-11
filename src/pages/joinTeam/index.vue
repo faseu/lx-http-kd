@@ -33,6 +33,8 @@
           prop="id_card"
           v-model="model.id_card"
           placeholder="请输入身份证号码"
+          @input="handleIdCardChange"
+          @blur="handleIdCardChange"
         />
         <wd-input
           label="联系电话"
@@ -228,6 +230,7 @@ import { onLoad } from '@dcloudio/uni-app'
 import { useToast, useMessage } from 'wot-design-uni'
 import driverItem from '@/components/driver-item/index.vue'
 import insurance from '@/components/insurance/index.vue'
+import { validateIdCard, idCardValidator, extractInfoFromIdCard } from '@/utils/idCardValidator'
 
 const message = useMessage()
 const toast = useToast()
@@ -355,10 +358,7 @@ const getRules = () => ({
   name: [{ required: true, message: '请输入姓名' }],
   id_card: [
     { required: true, message: '请输入身份证号' },
-    {
-      pattern: /^[1-9]\d{5}(18|19|20|21)\d{2}(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])\d{3}[\dXx]$/,
-      message: '身份证号格式不正确',
-    },
+    { validator: idCardValidator, trigger: ['blur', 'change'] }, // 使用自定义验证器，支持失焦和输入时验证
   ],
   phone: [
     { required: true, message: '请输入手机号' },
@@ -368,7 +368,13 @@ const getRules = () => ({
     },
   ],
   emergency_contact: [{ required: true, message: '请输入紧急联系人姓名' }],
-  emergency_contact_phone: [{ required: true, message: '请输入紧急联系人电话' }],
+  emergency_contact_phone: [
+    { required: true, message: '请输入紧急联系人电话' },
+    {
+      pattern: /^1[3-9]\d{9}$/,
+      message: '紧急联系人电话格式不正确',
+    },
+  ],
   license_plate: [
     {
       required: model.is_driver,
@@ -388,6 +394,22 @@ const getRules = () => ({
     },
   ],
 })
+
+const handleIdCardChange = (value) => {
+  // 实时验证身份证格式
+  if (value && value.length === 18) {
+    const result = validateIdCard(value)
+    if (result.valid) {
+      // 验证通过，可以提取信息进行自动填充
+      const info = extractInfoFromIdCard(value)
+      if (info) {
+        console.log('提取的身份证信息:', info)
+        // 这里可以根据需要自动填充一些字段，比如性别等
+        // 但在这个表单中暂时不需要
+      }
+    }
+  }
+}
 
 // 处理司机开关变化
 const handleDriverSwitchChange = ({ value: newValue }) => {

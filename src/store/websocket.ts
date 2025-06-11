@@ -9,6 +9,7 @@ export const useWebSocketStore = defineStore(
     const status = ref('closed')
     const lastMessage = ref<any>(null)
     const groups = ref<any>([])
+    const teams = ref<any>([])
     const socketInstance = ref<WebSocketClient | null>(null)
     const listeners = ref<((data: any) => void)[]>([])
 
@@ -22,7 +23,8 @@ export const useWebSocketStore = defineStore(
         onOpen: () => console.log('[Store] WebSocket connected'),
         onMessage: (data) => {
           if (data.type === 'init') {
-            groups.value = data.chats
+            groups.value = data.group_data
+            teams.value = data.team_data
           }
           lastMessage.value = data
           console.log('[Store] Received message:', data)
@@ -81,6 +83,7 @@ export const useWebSocketStore = defineStore(
       status,
       lastMessage,
       groups,
+      teams,
       addMessageListener,
       removeMessageListener,
     }

@@ -43,8 +43,8 @@
           />
         </view>
       </view>
-      <view class="flex-1 w-full bg-[#F6FDFF]">
-        <wd-cell-group border>
+      <view class="flex-1 w-full bg-[#F6FDFF]" v-show="tab === 1">
+        <wd-cell-group border v-if="wsStore.groups.length > 0">
           <wd-cell
             v-for="(item, index) in wsStore.groups"
             :title="item.group_name"
@@ -67,6 +67,43 @@
             </template>
           </wd-cell>
         </wd-cell-group>
+        <wd-status-tip
+          image="/static/images/common/tip-content.png"
+          custom-class="mt-50rpx"
+          tip="暂无内容"
+          v-else
+        />
+      </view>
+      <view class="flex-1 w-full bg-[#F6FDFF]" v-show="tab === 2">
+        <wd-cell-group border v-if="wsStore.teams.length > 0">
+          <wd-cell
+            v-for="(item, index) in wsStore.teams"
+            :title="item.group_name"
+            :value="formatChatTime(item.last_active)"
+            :label="item.last_message?.content"
+            :key="item.group_id"
+            is-link
+            @click="goToChatRoom(item.group_id)"
+          >
+            <template #icon>
+              <view class="cell-icon">
+                <wd-badge :modelValue="item.unread_count">
+                  <image
+                    mode="aspectFill"
+                    class="w-96rpx h-96rpx"
+                    src="/static/images/message/bell.png"
+                  />
+                </wd-badge>
+              </view>
+            </template>
+          </wd-cell>
+        </wd-cell-group>
+        <wd-status-tip
+          image="/static/images/common/tip-content.png"
+          custom-class="mt-50rpx"
+          tip="暂无内容"
+          v-else
+        />
       </view>
     </view>
     <tabbar :selected="3" />
@@ -74,24 +111,16 @@
 </template>
 
 <script setup lang="js">
-import { httpGet, httpPost } from '@/utils/http'
 import { onShow, onLoad } from '@dcloudio/uni-app'
 import tabbar from '@/components/tabbar/index.vue'
 import { useUserStore, useWebSocketStore } from '@/store'
 import { formatChatTime } from '@/utils/utils'
 
-const tab = ref(1)
+const tab = ref(2)
 
 const userStore = useUserStore()
 const { token } = userStore.userInfo
-const { run: runGetChatList } = useRequest((e) => httpGet('/api/groups/my'))
-const { run: runJoinChatList } = useRequest((e) => httpPost('/api/groups/join', { group_id: 1 }))
-
 const wsStore = useWebSocketStore()
-
-const handleJoinChat = () => {
-  runJoinChatList()
-}
 
 onShow(async () => {
   uni?.hideTabBar()

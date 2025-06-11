@@ -334,9 +334,9 @@
     <wd-gap safe-area-bottom height="150rpx"></wd-gap>
     <view class="footer bg-white" v-show="!showUserSheet">
       <view class="flex items-center text-20rpx h-120rpx">
-        <view class="flex flex-col items-center mr-48rpx" @click="share">
-          <image class="w-32rpx h-32rpx" src="/static/images/teamDetail/share.png" alt="" />
-          <view class="mt-6rpx">分享</view>
+        <view class="flex flex-col items-center mr-48rpx" @click="goToChatRoom">
+          <wd-icon name="usergroup" size="26px"></wd-icon>
+          <view class="mt-6rpx">群聊</view>
         </view>
         <wd-button
           custom-style="flex: 1; background-color: #000000 !important;"
@@ -389,7 +389,7 @@
 <script setup lang="js">
 import { httpGet, httpPost } from '@/utils/http'
 import driverItem from '@/components/driver-item/index.vue'
-import { onLoad, onShow } from '@dcloudio/uni-app'
+import { onLoad, onShareAppMessage, onShow } from '@dcloudio/uni-app'
 import { computed, ref } from 'vue'
 import { useUserStore } from '@/store'
 import { useMessage, useToast } from 'wot-design-uni'
@@ -409,6 +409,13 @@ onLoad(async (options) => {
   id.value = options.id
 })
 
+onShareAppMessage(() => {
+  return {
+    title: '快搭', // 分享的标题
+    path: `/pages/teamDetail/index?id=${id.value}`, // 好友点击分享之后跳转的页面
+  }
+})
+
 onShow(async () => {
   try {
     const data = await getTeamDetail({ id: id.value })
@@ -423,19 +430,6 @@ const goToJoinTeam = (teamId) => {
   if (!teamId) return
   uni.navigateTo({
     url: `/pages/joinTeam/index?id=${teamId}`,
-  })
-}
-
-const share = () => {
-  // 分享功能实现
-  uni.share({
-    provider: 'weixin',
-    scene: 'WXSceneSession',
-    type: 0,
-    href: `pages/teamDetail/index?id=${teamDetail.value?.id}`,
-    title: teamDetail.value?.team_name || '队伍详情',
-    summary: `${teamDetail.value?.location} ${formatDateTime(teamDetail.value?.start_time)}`,
-    imageUrl: 'https://temp.im/200x200',
   })
 }
 
@@ -874,6 +868,10 @@ const handleViewDriverPhotos = (driverData) => {
       })
     },
   })
+}
+
+const goToChatRoom = () => {
+  uni.navigateTo({ url: `/pages/chatRoom/index?id=${id.value}` })
 }
 </script>
 
