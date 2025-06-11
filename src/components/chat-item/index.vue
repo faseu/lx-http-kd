@@ -17,10 +17,29 @@
           class="chat-text-container-super"
           :style="[{ justifyContent: item.isMe ? 'flex-end' : 'flex-start' }]"
         >
-          <view :class="{ 'chat-text-container': true, 'chat-text-container-me': item.isMe }">
+          <!-- 文本消息 -->
+          <view
+            v-if="item.type !== 'image'"
+            :class="{ 'chat-text-container': true, 'chat-text-container-me': item.isMe }"
+          >
             <text :class="{ 'chat-text': true, 'chat-text-me': item.isMe }">
               {{ item.content }}
             </text>
+          </view>
+
+          <!-- 图片消息 -->
+          <view
+            v-else
+            :class="{ 'chat-image-container': true, 'chat-image-container-me': item.isMe }"
+            @click="previewImage"
+          >
+            <image
+              class="chat-image"
+              :src="item.content"
+              mode="aspectFill"
+              @load="onImageLoad"
+              @error="onImageError"
+            />
           </view>
         </view>
       </view>
@@ -40,6 +59,7 @@ export default {
           icon: '',
           name: '',
           content: '',
+          type: 'text', // 消息类型：text, image
           isMe: false,
         }
       },
@@ -47,6 +67,34 @@ export default {
   },
   data() {
     return {}
+  },
+  methods: {
+    // 预览图片
+    previewImage() {
+      if (this.item.type === 'image') {
+        uni.previewImage({
+          current: this.item.content,
+          urls: [this.item.content],
+          fail: (err) => {
+            console.error('预览图片失败:', err)
+            uni.showToast({
+              title: '图片加载失败',
+              icon: 'none',
+            })
+          },
+        })
+      }
+    },
+
+    // 图片加载成功
+    onImageLoad(e) {
+      console.log('图片加载成功:', e)
+    },
+
+    // 图片加载失败
+    onImageError(e) {
+      console.error('图片加载失败:', e)
+    },
   },
 }
 </script>
@@ -100,6 +148,31 @@ export default {
 .chat-text-container-me {
   background-color: #007aff;
 }
+
+/* 图片容器样式 */
+.chat-image-container {
+  margin-top: 10rpx;
+  border-radius: 8rpx;
+  overflow: hidden;
+  /* #ifndef APP-NVUE */
+  max-width: 400rpx;
+  /* #endif */
+  background-color: #f1f1f1;
+}
+.chat-image-container-me {
+  background-color: transparent;
+}
+
+/* 图片样式 */
+.chat-image {
+  width: 200rpx;
+  height: 200rpx;
+  border-radius: 8rpx;
+  /* #ifdef APP-NVUE */
+  max-width: 400rpx;
+  /* #endif */
+}
+
 .chat-text-container-super {
   display: flex;
   flex-direction: row;

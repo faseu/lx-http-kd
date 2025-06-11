@@ -334,7 +334,11 @@
     <wd-gap safe-area-bottom height="150rpx"></wd-gap>
     <view class="footer bg-white" v-show="!showUserSheet">
       <view class="flex items-center text-20rpx h-120rpx">
-        <view class="flex flex-col items-center mr-48rpx" @click="goToChatRoom">
+        <view
+          class="flex flex-col items-center mr-48rpx"
+          @click="goToChatRoom"
+          v-if="teamDetail.is_member"
+        >
           <wd-icon name="usergroup" size="26px"></wd-icon>
           <view class="mt-6rpx">群聊</view>
         </view>

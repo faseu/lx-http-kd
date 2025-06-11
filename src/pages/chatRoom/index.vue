@@ -45,7 +45,7 @@
       </view>
       <!-- 底部聊天输入框 -->
       <template #bottom>
-        <chat-input-bar ref="inputBar" @send="doSend" />
+        <chat-input-bar ref="inputBar" @send="doSend" @sendImage="doSendImage" />
       </template>
     </z-paging>
   </view>
@@ -109,7 +109,7 @@ const hidedKeyboard = () => {
   inputBar.value.hidedKeyboard()
 }
 
-// 发送新消息
+// 发送文本消息
 const doSend = (msg) => {
   uni.showLoading({
     title: '发送中...',
@@ -118,7 +118,7 @@ const doSend = (msg) => {
     type: 'chat_message', // 发送消息时要包含 `type` 必传
     content: msg,
     msg_type: 'text', // 消息类型 可选：text, image, audio, video
-    file_url: '', // 如果是 image, audio, video 类型，则 必传
+    media_url: '', // 如果是 image, audio, video 类型，则 必传
     command: 'send_message', // 添加 command 字段
     team_id: id.value,
     chat_type: 'team',
@@ -126,6 +126,21 @@ const doSend = (msg) => {
   setTimeout(() => {
     uni.hideLoading()
   }, 500)
+}
+
+// 发送图片消息
+const doSendImage = (imageData) => {
+  console.log('发送图片:', imageData)
+
+  wsStore.sendMessage({
+    type: 'chat_message',
+    content: imageData.url, // 使用上传后的URL作为内容
+    msg_type: 'image', // 消息类型为图片
+    media_url: imageData.url, // 图片URL
+    command: 'send_message',
+    team_id: id.value,
+    chat_type: 'team',
+  })
 }
 
 const handleMessage = (msg) => {
@@ -138,7 +153,8 @@ const handleMessage = (msg) => {
       time: item?.timestamp,
       icon: item?.sender?.avatar,
       name: item?.sender?.username,
-      content: item?.content,
+      content: item?.msg_type === 'image' ? item?.media_url : item?.content,
+      type: item?.msg_type || 'text', // 添加消息类型
       isMe: item?.sender?.id === userId,
     }))
     console.log(messageList)
@@ -149,7 +165,8 @@ const handleMessage = (msg) => {
       time: msg?.timestamp,
       icon: msg?.sender?.avatar,
       name: msg?.sender?.username,
-      content: msg?.content,
+      content: msg?.msg_type === 'image' ? msg?.media_url : msg?.content,
+      type: msg?.msg_type || 'text', // 添加消息类型
       isMe: msg?.sender?.id === userId,
     }
     paging?.value?.addChatRecordData(message)
