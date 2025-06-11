@@ -127,6 +127,9 @@ onShow(async () => {
   if (token) {
     wsStore.initWebSocket(`ws://1.14.59.102:8000/ws/chat?token=${token}`)
     console.log(wsStore.groups)
+    wsStore.sendMessage({
+      command: 'refresh',
+    })
   }
 })
 
