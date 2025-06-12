@@ -33,8 +33,6 @@
           prop="id_card"
           v-model="model.id_card"
           placeholder="请输入身份证号码"
-          @input="handleIdCardChange"
-          @blur="handleIdCardChange"
         />
         <wd-input
           label="联系电话"
@@ -225,7 +223,7 @@
 <script lang="js" setup>
 import { reactive, ref, computed, onMounted } from 'vue'
 import { httpPost, httpGet } from '@/utils/http'
-import { useUserStore } from '@/store'
+import { useUserStore, useWebSocketStore } from '@/store'
 import { onLoad } from '@dcloudio/uni-app'
 import { useToast, useMessage } from 'wot-design-uni'
 import driverItem from '@/components/driver-item/index.vue'
@@ -236,6 +234,7 @@ const message = useMessage()
 const toast = useToast()
 
 const userStore = useUserStore()
+const wsStore = useWebSocketStore()
 const {
   user_info: { id: localLeaderId, avatar: userAvatar, nickname: userNickname },
 } = userStore.userInfo
@@ -356,10 +355,7 @@ const processedDrivers = computed(() => {
 
 const getRules = () => ({
   name: [{ required: true, message: '请输入姓名' }],
-  id_card: [
-    { required: true, message: '请输入身份证号' },
-    { validator: idCardValidator, trigger: ['blur', 'change'] }, // 使用自定义验证器，支持失焦和输入时验证
-  ],
+  id_card: [{ required: true, message: '请输入身份证号' }],
   phone: [
     { required: true, message: '请输入手机号' },
     {
@@ -654,6 +650,9 @@ const handleSubmit = async () => {
         if (payData.pay_status === 1) {
           uni.showToast({ title: '已加入小队' })
           setTimeout(() => {
+            wsStore.sendMessage({
+              command: 'update',
+            })
             uni.navigateBack()
           }, 1500)
         } else {
@@ -667,6 +666,9 @@ const handleSubmit = async () => {
             success: (res) => {
               uni.showToast({ title: '支付成功，加入小队' })
               setTimeout(() => {
+                wsStore.sendMessage({
+                  command: 'update',
+                })
                 uni.navigateBack()
               }, 1500)
             },

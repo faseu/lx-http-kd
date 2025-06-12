@@ -56,6 +56,9 @@
           <text class="underline">《隐私政策》</text>
         </view>
       </view>
+      <view class="flex items-center mt-30rpx text-24rpx color-[#fff]" @click="goToHome">
+        跳过登录>>
+      </view>
     </view>
   </view>
 </template>
@@ -106,6 +109,12 @@ const handleGetPhoneNumber = async (e) => {
       url: '/pages/home/index',
     })
   }
+}
+
+const goToHome = (id) => {
+  uni.switchTab({
+    url: '/pages/home/index',
+  })
 }
 </script>
 

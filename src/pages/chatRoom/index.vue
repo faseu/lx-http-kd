@@ -68,12 +68,18 @@ const dataList = ref([])
 const userStore = useUserStore()
 const {
   user_info: { id: userId },
+  token,
 } = userStore.userInfo
 
 onLoad((options) => {
   id.value = options.id
   // paging.value.reload()
-  wsStore.addMessageListener(handleMessage)
+  if (token) {
+    wsStore.initWebSocket(`ws://1.14.59.102:8000/ws/chat?token=${token}`)
+    console.log(wsStore)
+    wsStore.addMessageListener(handleMessage)
+  } else {
+  }
 })
 onUnload(() => {
   wsStore.removeMessageListener(handleMessage)

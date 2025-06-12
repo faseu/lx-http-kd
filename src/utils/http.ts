@@ -1,8 +1,11 @@
 import { CustomRequestOptions } from '@/interceptors/request'
 import { useUserStore } from '@/store'
+// import { useMessage } from 'wot-design-uni'
 
 export const http = <T>(options: CustomRequestOptions) => {
   const userStore = useUserStore()
+  // const message = useMessage()
+
   // 1. 返回 Promise 对象
   return new Promise<IResData<T>>((resolve, reject) => {
     uni.request({
@@ -21,7 +24,20 @@ export const http = <T>(options: CustomRequestOptions) => {
         } else if (res.statusCode === 401) {
           // 401错误  -> 清理用户信息，跳转到登录页
           userStore.clearUserInfo()
-          uni.navigateTo({ url: '/pages/login/index' })
+          // try {
+          //   message
+          //     .confirm({
+          //       msg: '需要前往登录页面，可查看内容',
+          //       title: '暂无权限',
+          //     })
+          //     .then(() => {
+          //       uni.navigateTo({ url: '/pages/login/index' })
+          //     })
+          //     .catch(() => {
+          //       console.log('已取消')
+          //     })
+          // } catch (error) {}
+          // uni.navigateTo({ url: '/pages/login/index' })
           reject(res)
         } else if (res?.data?.code !== 200) {
           // 其他错误 -> 根据后端错误信息轻提示
