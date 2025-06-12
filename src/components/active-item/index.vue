@@ -27,7 +27,7 @@
         <view>来回{{ item.hiking_distance || '--' }}km</view>
       </view>
       <view class="text-20rpx color-[#999]">
-        {{ item.hiking_duration || '--' }}小时徒步｜海拔 {{ item.peak_altitude || '--' }}km｜{{
+        {{ item.hiking_duration || '--' }}小时徒步｜海拔 {{ item.peak_altitude || '--' }}m｜{{
           item.travel_method || '未知'
         }}
       </view>

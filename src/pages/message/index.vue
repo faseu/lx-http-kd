@@ -115,18 +115,21 @@ import { onShow, onLoad } from '@dcloudio/uni-app'
 import tabbar from '@/components/tabbar/index.vue'
 import { useUserStore, useWebSocketStore } from '@/store'
 import { formatChatTime } from '@/utils/utils'
-
+import { useToast } from 'wot-design-uni'
+import { getIsTabbar } from '@/utils'
+const toast = useToast()
 const tab = ref(2)
 
 const userStore = useUserStore()
-const { token } = userStore.userInfo
+const token = computed(() => userStore.userInfo.token)
 const wsStore = useWebSocketStore()
 
 onShow(async () => {
-  uni?.hideTabBar()
-  if (token) {
-    wsStore.initWebSocket(`ws://1.14.59.102:8000/ws/chat?token=${token}`)
-    console.log(wsStore.groups)
+  if (getIsTabbar()) {
+    uni?.hideTabBar()
+  }
+  if (token.value) {
+    wsStore.initWebSocket(`ws://1.14.59.102:8000/ws/chat?token=${token.value}`)
     wsStore.sendMessage({
       command: 'refresh',
     })

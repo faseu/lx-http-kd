@@ -20,7 +20,12 @@
         <view class="mine-left">
           <view class="avator">
             <view class="avator-img">
-              <wd-img width="100%" height="100%" round :src="userInfo?.avatar" />
+              <wd-img
+                width="100%"
+                height="100%"
+                round
+                :src="isLogined ? userInfo?.avatar : '/static/images/common/avatar.png'"
+              />
             </view>
             <view class="edit-img" @click="goToSettings">
               <wd-img width="100%" height="100%" src="/static/images/mine/edit-btn.png" />
@@ -31,7 +36,8 @@
           <view class="setting-btn" @click="goToSettings">
             <wd-img width="100%" height="100%" src="/static/images/mine/setting-btn.png" />
           </view>
-          <view class="mine-name">{{ userInfo?.nickname }}</view>
+          <view class="mine-name" v-if="isLogined">{{ userInfo?.nickname }}</view>
+          <view class="mine-name" v-else @click="goToLogin">注册/登录</view>
           <view class="mine-type">
             <view
               class="type-item"
@@ -46,11 +52,11 @@
       </view>
       <view class="follow-box">
         <view class="follow-item">
-          <view class="num">{{ userInfo?.following_count }}</view>
+          <view class="num">{{ userInfo?.following_count || 0 }}</view>
           <view class="label">关注</view>
         </view>
         <view class="follow-item">
-          <view class="num">{{ userInfo?.followers_count }}</view>
+          <view class="num">{{ userInfo?.followers_count || 0 }}</view>
           <view class="label">粉丝</view>
         </view>
       </view>
@@ -62,21 +68,32 @@
           <view class="label">{{ i.name }}</view>
           <wd-icon name="arrow-right" size="12px" color="#797979" />
         </view>
+        <view class="logout-box" v-if="isLogined" @click="goToLogin">
+          <wd-icon name="logout" size="22px"></wd-icon>
+          <text class="ml-20rpx">退出登录</text>
+        </view>
       </view>
     </view>
     <tabbar :selected="4" />
-    <wd-toast />
   </view>
 </template>
 
-<script lang="ts" setup>
+<script lang="js" setup>
 import tabbar from '@/components/tabbar/index.vue'
 import { useToast } from 'wot-design-uni'
 import { onShow } from '@dcloudio/uni-app'
 import { httpGet } from '@/utils/http'
 import { getIsTabbar } from '@/utils'
+import { useUserStore } from '@/store'
+const toast = useToast()
+
+const userStore = useUserStore()
+const isLogined = computed(() => userStore.isLogined)
+
+const userInfo = ref()
 // 请求用户信息
-const { data: userInfo, run: runGetUserInfo } = useRequest(() => httpGet('/api/get_user'))
+const { run: runGetUserInfo } = useRequest(() => httpGet('/api/get_user'))
+
 defineOptions({
   name: 'mine',
 })
@@ -104,33 +121,12 @@ const contentList = ref([
   },
 ])
 
-const followList = ref([
-  {
-    name: '关注',
-    num: '145',
-  },
-  {
-    name: '粉丝',
-    num: '12.4k',
-  },
-  {
-    name: '获赞',
-    num: '8',
-  },
-])
-
-const mineName = ref<string>('此处是昵称')
-const mineBrif = ref<string>('此处是简介...此处是简介...')
-const mineType = ref(['登山达人', '徒步达人', '游泳达人', '跑酷达人'])
-
-const toast = useToast()
-/**
- * @brief        :
- * @explanation  : 跳转二级页面
- * @return        {*}
- */
 const toPage = (e) => {
-  if (e.name == '我的收藏' || e.name == '我的相册') {
+  if (!isLogined.value) {
+    toast.show('请先登录！')
+    return
+  }
+  if (e.name === '我的收藏' || e.name === '我的相册') {
     toast.show('正在开发中，敬请期待！～')
   } else {
     uni.navigateTo({
@@ -143,11 +139,18 @@ const goToSettings = () => {
   uni.navigateTo({ url: `/pages/settings/index` })
 }
 
+const goToLogin = () => {
+  userStore.clearUserInfo()
+  uni.navigateTo({ url: `/pages/login/index` })
+}
+
 onShow(async () => {
   if (getIsTabbar()) {
     uni?.hideTabBar()
   }
-  await runGetUserInfo()
+  if (isLogined.value) {
+    userInfo.value = await runGetUserInfo()
+  }
 })
 </script>
 
@@ -290,6 +293,7 @@ onShow(async () => {
     }
 
     .content-box {
+      position: relative;
       margin-top: 28rpx;
       z-index: 99;
       width: 100%;
@@ -322,6 +326,14 @@ onShow(async () => {
         flex: 1;
         margin-left: 6rpx;
       }
+    }
+
+    .logout-box {
+      position: absolute;
+      bottom: 150rpx;
+      color: #d5d5d5;
+      display: flex;
+      align-items: center;
     }
   }
 }

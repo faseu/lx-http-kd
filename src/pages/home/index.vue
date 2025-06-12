@@ -121,7 +121,8 @@ import { httpGet } from '@/utils/http'
 import { ref } from 'vue'
 import { getIsTabbar } from '@/utils'
 import { useUserStore, useWebSocketStore } from '@/store'
-
+import { useToast } from 'wot-design-uni'
+const toast = useToast()
 const paging = ref(null)
 const functionList = ref([])
 const tmpClassify = 'preview'
@@ -194,11 +195,12 @@ onShow(async () => {
 })
 const wsStore = useWebSocketStore()
 const userStore = useUserStore()
-const { token } = userStore.userInfo
+const token = computed(() => userStore.userInfo.token)
 
 onLoad(() => {
-  if (token) {
-    wsStore.initWebSocket(`ws://1.14.59.102:8000/ws/chat?token=${token}&type=team`)
+  if (token.value) {
+    console.log(token.value)
+    wsStore.initWebSocket(`ws://1.14.59.102:8000/ws/chat?token=${token.value}&type=team`)
     console.log(wsStore.groups)
   }
 })

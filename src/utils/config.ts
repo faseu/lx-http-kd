@@ -1,6 +1,6 @@
 export const ballList = [
-  { text: '宠物', size: 144, top: 0, left: 70 },
-  { text: '跑步', size: 186, top: 62, left: 248 },
+  { text: '跑步', size: 144, top: 0, left: 70 },
+  { text: '徒步', size: 186, top: 62, left: 248 },
   { text: '滑雪', size: 144, top: 0, left: 466 },
   { text: '爬山', size: 212, top: 180, left: 0 },
   { text: '潜水', size: 144, top: 304, left: 248 },

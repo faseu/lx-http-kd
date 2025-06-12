@@ -337,7 +337,7 @@
         <view
           class="flex flex-col items-center mr-48rpx"
           @click="goToChatRoom"
-          v-if="teamDetail.is_member"
+          v-if="teamDetail?.is_member"
         >
           <wd-icon name="usergroup" size="26px"></wd-icon>
           <view class="mt-6rpx">群聊</view>
@@ -447,7 +447,7 @@ const isCurrentUserDriver = computed(() => {
   const currentUserId = getCurrentUserId()
   return (
     teamDetail.value?.members_info?.some(
-      (member) => member.is_driver && member.user_info?.id === currentUserId,
+      (member) => member?.is_driver && member?.user_info?.id === currentUserId,
     ) || false
   )
 })
@@ -529,7 +529,7 @@ const processedDrivers = computed(() => {
     .map((driver) => {
       const isCurrentUserCar = driver.user_info?.id === currentUserId
       const isCurrentUserPassenger = driver.car_passengers?.some(
-        (passenger) => passenger.user_info.id === currentUserId,
+        (passenger) => passenger?.user_info?.id === currentUserId,
       )
 
       return {
@@ -553,12 +553,8 @@ const processedDrivers = computed(() => {
 
 // 获取当前用户ID（需要根据你的用户管理方式实现）
 const getCurrentUserId = () => {
-  // 这里需要根据你的项目实际情况获取当前用户ID
-  // 例如从 store、localStorage 或其他地方获取
-  const {
-    user_info: { id },
-  } = userStore.userInfo
-  return id
+  const userInfo = userStore.userInfo
+  return userInfo?.user_info?.id || -1
 }
 
 // 退出队伍功能
@@ -637,6 +633,10 @@ const reviewDriver = async (participantId, reviewStatus) => {
 
 // 修改报名按钮的点击逻辑
 const handleJoinButtonClick = () => {
+  if (getCurrentUserId() === -1) {
+    toast.show('请先登录后报名！')
+    return
+  }
   if (isCurrentUserJoined.value) {
     // 已经是成员，执行退出操作
     exitTeam()
@@ -720,6 +720,10 @@ const handleRejectDriver = async (driverData) => {
 // 加入车辆
 const handleJoinCar = async (driverData) => {
   try {
+    if (getCurrentUserId() === -1) {
+      toast.show('请先登录后加入车辆！')
+      return
+    }
     // 首先检查用户是否已经报名加入队伍
     if (!teamDetail.value?.is_member) {
       message

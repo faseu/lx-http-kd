@@ -32,6 +32,12 @@
 </template>
 
 <script setup>
+import { useUserStore } from '@/store'
+import { useToast } from 'wot-design-uni'
+const userStore = useUserStore()
+const toast = useToast()
+const isLogined = computed(() => userStore.isLogined)
+
 const props = defineProps({
   selected: {
     type: Number,
@@ -75,8 +81,12 @@ const handleChangeTabbar = (value) => {
     })
   }
 }
+
 const goToPublish = () => {
-  console.log(222)
+  if (!isLogined.value) {
+    toast.show('请先登录！')
+    return
+  }
   uni.navigateTo({ url: '/pages/publish/index' })
 }
 </script>

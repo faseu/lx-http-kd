@@ -68,6 +68,11 @@ import WaterfallMoments from '@/components/WaterfallMoments/index.vue'
 import { onShow } from '@dcloudio/uni-app'
 import { httpGet, httpPost } from '@/utils/http'
 import { getIsTabbar } from '@/utils'
+import { useUserStore } from '@/store'
+import { useToast } from 'wot-design-uni'
+const userStore = useUserStore()
+const toast = useToast()
+const isLogined = computed(() => userStore.isLogined)
 
 // 请求精彩瞬间列表
 const { run: runGetMomentsList } = useRequest(({ page_size, page }) =>
@@ -105,17 +110,6 @@ const tabChange = (e) => {
   paging.value.reload()
 }
 
-const inputClick = () => {
-  console.log(searchInput)
-  // 可以在这里实现搜索功能
-  if (searchInput.value.trim()) {
-    // 跳转到搜索页面
-    uni.navigateTo({
-      url: `/pages/search/index?keyword=${searchInput.value}`,
-    })
-  }
-}
-
 const likeAblum = (e, j) => {
   const target = dataList.value.find((item) => item.id === e.id)
   if (target) {
@@ -143,7 +137,11 @@ const toDetail = (e) => {
   })
 }
 
-const goToAddShare = (id) => {
+const goToAddShare = () => {
+  if (!isLogined.value) {
+    toast.show('请先登录！')
+    return
+  }
   uni.navigateTo({ url: `/pages/addShare/index` })
 }
 

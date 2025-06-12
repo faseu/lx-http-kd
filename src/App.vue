@@ -4,7 +4,7 @@ import 'abortcontroller-polyfill/dist/abortcontroller-polyfill-only'
 import { useUserStore } from '@/store'
 import { getIsTabbar } from '@/utils'
 const userStore = useUserStore()
-const { token } = userStore.userInfo
+const token = computed(() => userStore.userInfo.token)
 onLaunch(() => {
   if (getIsTabbar()) {
     uni?.hideTabBar()

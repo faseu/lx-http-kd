@@ -307,6 +307,8 @@ import dayjs from 'dayjs'
 import { ballList, province, city } from '@/utils/config'
 import { useToast } from 'wot-design-uni'
 import { httpPost } from '@/utils/http'
+import { generateRandomNickname } from '@/utils/nickname'
+
 const { run: runSetUserinfo } = useRequest((e) => httpPost('/api/get_user', { ...e }))
 
 const toast = useToast()

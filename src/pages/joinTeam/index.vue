@@ -236,7 +236,12 @@ const toast = useToast()
 const userStore = useUserStore()
 const wsStore = useWebSocketStore()
 const {
-  user_info: { id: localLeaderId, avatar: userAvatar, nickname: userNickname },
+  user_info: {
+    id: localLeaderId,
+    avatar: userAvatar,
+    nickname: userNickname,
+    openid: userInfoOpenid,
+  },
 } = userStore.userInfo
 
 const form = ref()
@@ -593,10 +598,12 @@ onLoad(async (options) => {
   }
 
   try {
-    const { code } = await uni.login()
-    const { openid: tempOpenid } = await getOpenid({ code })
-    console.log(tempOpenid)
-    openid.value = tempOpenid
+    if (!userInfoOpenid) {
+      const { code } = await uni.login()
+      const { openid: tempOpenid } = await getOpenid({ code })
+      console.log(tempOpenid)
+      openid.value = tempOpenid
+    }
 
     await Promise.all([fetchInsuranceList(), fetchAndFillUserInfo(), fetchTeamDetail(id.value)])
   } catch (error) {

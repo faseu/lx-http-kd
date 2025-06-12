@@ -38,7 +38,12 @@
           </view>
         </view>
       </wd-button>
-      <view class="flex items-center mt-30rpx">
+
+      <view class="flex items-center mt-30rpx text-24rpx color-[#000]" @click="goToHome">
+        跳过登录>>
+      </view>
+
+      <view class="pos-absolute bottom-[48rpx] flex items-center mt-30rpx">
         <wd-img
           @click="handleReadAgreement"
           custom-class="w-28rpx h-28rpx mr-6rpx"
@@ -56,9 +61,6 @@
           <text class="underline">《隐私政策》</text>
         </view>
       </view>
-      <view class="flex items-center mt-30rpx text-24rpx color-[#fff]" @click="goToHome">
-        跳过登录>>
-      </view>
     </view>
   </view>
 </template>
@@ -67,9 +69,12 @@
 import { useToast } from 'wot-design-uni'
 import { httpPost } from '@/utils/http'
 import { useUserStore } from '@/store'
+import { generateRandomNickname } from '@/utils/nickname'
 const userStore = useUserStore()
 const read = ref(true)
 const toast = useToast()
+const { run: getOpenid } = useRequest((e) => httpPost('/api/get_openid', e))
+const { run: runSetUserinfo } = useRequest((e) => httpPost('/api/get_user', { ...e }))
 
 const { run: runGetUserInfo } = useRequest((e) =>
   httpPost('/api/wechat_login', {
@@ -100,7 +105,15 @@ const handleGetPhoneNumber = async (e) => {
     iv: e.iv,
   })
   userStore.setUserInfo(JSON.parse(JSON.stringify(data)))
-  if (data.is_new_user) {
+  const { code } = await uni.login()
+  const { openid: tempOpenid } = await getOpenid({ code })
+  await runSetUserinfo({
+    avatar:
+      'https://kuaida-1348792525.cos.ap-chengdu.myqcloud.com/uploads/image/34f63803-46a0-43d5-a457-68f435ae511b.png',
+    nickname: generateRandomNickname(),
+    openid: tempOpenid,
+  })
+  if (!data.is_new_user) {
     uni.navigateTo({
       url: '/pages/userSettings/index',
     })
