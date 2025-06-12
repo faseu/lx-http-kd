@@ -56,7 +56,7 @@ const httpInterceptor = {
       if (token) {
         options.header.Authorization = `Bearer ${token}`
       } else {
-        uni.reLaunch({ url: '/pages/login/index' })
+        // uni.reLaunch({ url: '/pages/login/index' })
       }
     }
   },
