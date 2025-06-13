@@ -105,19 +105,25 @@ const handleGetPhoneNumber = async (e) => {
     iv: e.iv,
   })
   userStore.setUserInfo(JSON.parse(JSON.stringify(data)))
-  const { code } = await uni.login()
-  const { openid: tempOpenid } = await getOpenid({ code })
-  await runSetUserinfo({
-    avatar:
-      'https://kuaida-1348792525.cos.ap-chengdu.myqcloud.com/uploads/image/34f63803-46a0-43d5-a457-68f435ae511b.png',
-    nickname: generateRandomNickname(),
-    openid: tempOpenid,
-  })
+
   if (!data.is_new_user) {
+    const { code } = await uni.login()
+    const { openid: tempOpenid } = await getOpenid({ code })
+    await runSetUserinfo({
+      avatar:
+        'https://kuaida-1348792525.cos.ap-chengdu.myqcloud.com/uploads/image/34f63803-46a0-43d5-a457-68f435ae511b.png',
+      nickname: generateRandomNickname(),
+      openid: tempOpenid,
+    })
     uni.navigateTo({
       url: '/pages/userSettings/index',
     })
   } else {
+    const { code } = await uni.login()
+    const { openid: tempOpenid } = await getOpenid({ code })
+    await runSetUserinfo({
+      openid: tempOpenid,
+    })
     uni.switchTab({
       url: '/pages/home/index',
     })

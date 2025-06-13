@@ -2,7 +2,7 @@
   <view
     class="w-100vw h-488rpx bg-[#DFF2F6] pos-relative left-[-20rpx] p-[38rpx_20rpx_22rpx] box-border flex flex-col justify-between text-24rpx color-[#333]"
   >
-    <view class="flex justify-between" v-if="insuranceList.length > 0">
+    <view class="content-box" v-if="insuranceList.length > 0">
       <!-- 动态渲染保险选项 -->
       <view
         v-for="(insurance, index) in displayInsuranceList"
@@ -80,7 +80,7 @@ const selectedInsurance = ref({})
 
 // 计算显示的保险列表（最多显示3个）
 const displayInsuranceList = computed(() => {
-  return props.insuranceList.slice(0, 3)
+  return props.insuranceList.slice(0, 5)
 })
 
 // 格式化保额显示
@@ -151,6 +151,18 @@ watch(
 </script>
 
 <style scoped lang="scss">
+.content-box {
+  height: 358rpx;
+  display: flex;
+  overflow-x: scroll;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE 10+ */
+
+  &::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Opera */
+  }
+}
+
 .item {
   position: relative;
   width: 228rpx;
@@ -164,6 +176,7 @@ watch(
   padding: 18rpx 14rpx 32rpx;
   box-sizing: border-box;
   cursor: pointer;
+  margin-right: 12rpx;
 
   .title {
     font-weight: bold;

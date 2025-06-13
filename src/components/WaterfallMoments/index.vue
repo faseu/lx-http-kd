@@ -474,7 +474,6 @@ const onLikeClick = (item) => {
   gap: 16rpx;
   padding: 0 16rpx;
   box-sizing: border-box;
-  min-height: 400rpx;
 }
 
 .waterfall-loading {

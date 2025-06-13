@@ -337,7 +337,7 @@
         <view
           class="flex flex-col items-center mr-48rpx"
           @click="goToChatRoom"
-          v-if="teamDetail?.is_member"
+          v-if="isCurrentUserJoined"
         >
           <wd-icon name="usergroup" size="26px"></wd-icon>
           <view class="mt-6rpx">群聊</view>
