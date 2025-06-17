@@ -106,7 +106,7 @@ const handleGetPhoneNumber = async (e) => {
   })
   userStore.setUserInfo(JSON.parse(JSON.stringify(data)))
 
-  if (!data.is_new_user) {
+  if (data.is_new_user) {
     const { code } = await uni.login()
     const { openid: tempOpenid } = await getOpenid({ code })
     await runSetUserinfo({

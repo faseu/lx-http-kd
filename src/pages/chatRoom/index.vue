@@ -75,7 +75,8 @@ onLoad((options) => {
   id.value = options.id
   // paging.value.reload()
   if (token) {
-    wsStore.initWebSocket(`wss://api.kuaida.fun/ws/chat?token=${token}`)
+    // wsStore.initWebSocket(`wss://api.kuaida.fun/ws/chat?token=${token}`)
+    wsStore.initWebSocket(`wss://api.chuanshanzhixing.cn/ws/chat?token=${token}`)
     console.log(wsStore)
     wsStore.addMessageListener(handleMessage)
   } else {

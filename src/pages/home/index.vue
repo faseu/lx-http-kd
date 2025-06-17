@@ -200,8 +200,8 @@ const token = computed(() => userStore.userInfo.token)
 onLoad(() => {
   if (token.value) {
     console.log(token.value)
-    wsStore.initWebSocket(`wss://api.kuaida.fun/ws/chat?token=${token.value}`)
-    // wsStore.initWebSocket(`ws://1.14.59.102:9000/ws/chat?token=${token.value}&type=team`)
+    // wsStore.initWebSocket(`wss://api.kuaida.fun/ws/chat?token=${token.value}`)
+    wsStore.initWebSocket(`wss://api.chuanshanzhixing.cn/ws/chat?token=${token.value}`)
     console.log(wsStore.groups)
   }
 })

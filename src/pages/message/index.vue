@@ -129,7 +129,8 @@ onShow(async () => {
     uni?.hideTabBar()
   }
   if (token.value) {
-    wsStore.initWebSocket(`wss://api.kuaida.fun/ws/chat?token=${token.value}`)
+    // wsStore.initWebSocket(`wss://api.kuaida.fun/ws/chat?token=${token.value}`)
+    wsStore.initWebSocket(`wss://api.chuanshanzhixing.cn/ws/chat?token=${token.value}`)
     wsStore.sendMessage({
       command: 'refresh',
     })
